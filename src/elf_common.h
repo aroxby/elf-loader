@@ -30,6 +30,9 @@
 #ifndef _SYS_ELF_COMMON_H_
 #define	_SYS_ELF_COMMON_H_ 1
 
+#include <cstdint>
+typedef uint32_t u_int32_t;
+
 /*
  * ELF definitions that are independent of architecture or word size.
  */
