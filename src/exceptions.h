@@ -12,6 +12,13 @@ public:
 class IncompatibleMachineType : public ElfLoaderException {
 public:
     const char *what() const noexcept {
-        return "Specified machine type not compatible";
+        return "Incompatible machine type";
+    }
+};
+
+class IncompatibleVersion : public ElfLoaderException {
+public:
+    const char *what() const noexcept {
+        return "Incompatible ELF version";
     }
 };

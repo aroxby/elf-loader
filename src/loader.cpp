@@ -1,4 +1,3 @@
-#include <cstring>  // for memcmp
 #include <iostream>  // For cout
 #include <fstream>
 #include "elf64.h"
@@ -24,12 +23,17 @@ ElfLoader::ElfLoader(const string &path) {
         throw InvalidSignature();
     }
 
-    if(header.e_machine != EM_X86_64) {
+    if(header.e_version != EV_CURRENT) {
         cerr << "Machine type: " << header.e_machine << endl;
         throw IncompatibleMachineType();
     }
 
-    // Dump
+    if(header.e_machine != EM_X86_64) {
+        cerr << "Machine type: " << header.e_machine << endl;
+        throw IncompatibleVersion();
+    }
+
+    // Dump main header
     cout << "Type: " << header.e_type << endl;
     cout << "Machine: " << header.e_machine << endl;
     cout << "Version: " << header.e_version << endl;
