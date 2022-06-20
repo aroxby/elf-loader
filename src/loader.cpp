@@ -1,12 +1,18 @@
+#include <cstring>  // for memcmp
 #include <iostream>  // For cout
 #include <fstream>
+#include "elf64.h"
+#include "exceptions.h"
+#include "elf_decoding.h"
 #include "loader.h"
 using namespace std;
+
 
 ElfLoader::ElfLoader(const string &path) {
     // Enable exceptions
     ifstream ifs;
     ifs.exceptions(ifstream::eofbit | ifstream::failbit | ifstream::badbit);
+
     // Open the file
     ifs.open(path, ios_base::in | ios_base::binary);
 
@@ -14,10 +20,16 @@ ElfLoader::ElfLoader(const string &path) {
     Elf64_Ehdr header;
     ifs.read((char*)&header, sizeof(header));
 
+    if(!IS_ELF(header)) {
+        throw InvalidSignature();
+    }
+
+    if(header.e_machine != EM_X86_64) {
+        cerr << "Machine type: " << header.e_machine << endl;
+        throw IncompatibleMachineType();
+    }
+
     // Dump
-    // This doesn't output the full ident as it contains nulls
-    // But we don't plan on always printing the ident either so...
-    cout << "Magic: " << header.e_ident << endl;
     cout << "Type: " << header.e_type << endl;
     cout << "Machine: " << header.e_machine << endl;
     cout << "Version: " << header.e_version << endl;
