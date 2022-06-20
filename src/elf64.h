@@ -29,9 +29,7 @@
 #ifndef _SYS_ELF64_H_
 #define _SYS_ELF64_H_ 1
 
-#include <cstdint>
-
-#define EI_NIDENT 16
+#include <sys/elf_common.h>
 
 /*
  * ELF definitions common to all 64-bit architectures.
@@ -153,6 +151,11 @@ typedef struct {
 #define	ELF64_R_TYPE_ID(info)	(((Elf64_Xword)(info)<<56)>>56)
 #define	ELF64_R_TYPE_INFO(data, type)	\
 				(((Elf64_Xword)(data)<<8)+(Elf64_Xword)(type))
+
+/*
+ *	Note entry header
+ */
+typedef Elf_Note Elf64_Nhdr;
 
 /*
  *	Move entry
