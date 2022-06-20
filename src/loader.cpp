@@ -1,5 +1,7 @@
 #include <iostream>  // For cout
-#include <fstream>
+#include <fstream>  // For ifstream
+#include <memory>  // For unique_ptr
+#include <vector>
 #include "elf64.h"
 #include "exceptions.h"
 #include "elf_decoding.h"
@@ -48,21 +50,31 @@ ElfLoader::ElfLoader(const string &path) {
     cout << "Number of Section Header Entries: " << header.e_shnum << endl;
     cout << "Strings Section Index: " << header.e_shstrndx << endl;
 
-    Elf64_Shdr sheader;
+    // Load section headers
     ifs.seekg(header.e_shoff);
+    unique_ptr<Elf64_Shdr[]> sheaders(new Elf64_Shdr[header.e_shnum]);
     for(int i = 0; i < header.e_shnum; i++) {
-        ifs.read((char*)&sheader, sizeof(sheader));
+        ifs.read((char*)&sheaders[i], sizeof(Elf64_Shdr));
+    }
+
+    // Load string section
+    unique_ptr<char[]> strings(new char[sheaders[header.e_shstrndx].sh_size]);
+    ifs.seekg(sheaders[header.e_shstrndx].sh_offset);
+    ifs.read(&strings[0], sheaders[header.e_shstrndx].sh_size);
+
+    // Dump sections
+    for(int i = 0; i < header.e_shnum; i++) {
         cout << endl;
-        cout << "Section Name Index: " << sheader.sh_name << endl;
-        cout << "Section Type: " << getSectionTypeName(sheader.sh_type) \
-            << '(' << (void*)((size_t)sheader.sh_type) << ')' << endl;
-        cout << "Section Flags: " << (void*)sheader.sh_flags << endl;
-        cout << "Section Address: " << (void*)sheader.sh_addr << endl;
-        cout << "Section Offset: " << (void*)sheader.sh_offset << endl;
-        cout << "Section Size: " << sheader.sh_size << endl;
-        cout << "Related Section: " << sheader.sh_link << endl;
-        cout << "Section Info: " << (void*)((size_t)sheader.sh_info) << endl;
-        cout << "Section Alignment: " << (void*)sheader.sh_addralign << endl;
-        cout << "Section Entry Size: " << (void*)sheader.sh_entsize << endl;
+        cout << "Section Name Offset: " << sheaders[i].sh_name << endl;
+        cout << "Section Name: " << &strings[sheaders[i].sh_name] << endl;
+        cout << "Section Type: " << getSectionTypeName(sheaders[i].sh_type) << endl;
+        cout << "Section Flags: " << (void*)sheaders[i].sh_flags << endl;
+        cout << "Section Address: " << (void*)sheaders[i].sh_addr << endl;
+        cout << "Section Offset: " << (void*)sheaders[i].sh_offset << endl;
+        cout << "Section Size: " << sheaders[i].sh_size << endl;
+        cout << "Related Section: " << sheaders[i].sh_link << endl;
+        cout << "Section Info: " << (void*)((size_t)sheaders[i].sh_info) << endl;
+        cout << "Section Alignment: " << (void*)sheaders[i].sh_addralign << endl;
+        cout << "Section Entry Size: " << (void*)sheaders[i].sh_entsize << endl;
     }
 }
