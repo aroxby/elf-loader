@@ -43,4 +43,22 @@ ElfLoader::ElfLoader(const string &path) {
     cout << "Section Header Size: "<< header.e_shentsize << endl;
     cout << "Number of Section Header Entries: " << header.e_shnum << endl;
     cout << "Strings Section Index: " << header.e_shstrndx << endl;
+
+    Elf64_Shdr sheader;
+    ifs.seekg(header.e_shoff);
+    for(int i = 0; i < header.e_shnum; i++) {
+        ifs.read((char*)&sheader, sizeof(sheader));
+        cout << endl;
+        cout << "Section Name Index: " << sheader.sh_name << endl;
+        cout << "Section Type: " << getSectionTypeName(sheader.sh_type) \
+            << '(' << (void*)((size_t)sheader.sh_type) << ')' << endl;
+        cout << "Section Flags: " << (void*)sheader.sh_flags << endl;
+        cout << "Section Address: " << (void*)sheader.sh_addr << endl;
+        cout << "Section Offset: " << (void*)sheader.sh_offset << endl;
+        cout << "Section Size: " << sheader.sh_size << endl;
+        cout << "Related Section: " << sheader.sh_link << endl;
+        cout << "Section Info: " << (void*)((size_t)sheader.sh_info) << endl;
+        cout << "Section Alignment: " << (void*)sheader.sh_addralign << endl;
+        cout << "Section Entry Size: " << (void*)sheader.sh_entsize << endl;
+    }
 }
