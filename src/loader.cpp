@@ -50,6 +50,10 @@ ElfLoader::ElfLoader(const string &path) {
     cout << "Number of Section Header Entries: " << header.e_shnum << endl;
     cout << "Strings Section Index: " << header.e_shstrndx << endl;
 
+    if(header.e_shentsize != sizeof(Elf64_Shdr)) {
+        throw UnsupportedFileConfiguration();
+    }
+
     // Load section headers
     ifs.seekg(header.e_shoff);
     unique_ptr<Elf64_Shdr[]> sheaders(new Elf64_Shdr[header.e_shnum]);

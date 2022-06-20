@@ -22,3 +22,10 @@ public:
         return "Incompatible ELF version";
     }
 };
+
+class UnsupportedFileConfiguration : public ElfLoaderException {
+public:
+    const char *what() const noexcept {
+        return "File configuration is not supported";
+    }
+};
