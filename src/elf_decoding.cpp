@@ -3,14 +3,16 @@
 #include "elf_common.h"
 #include "elf_decoding.h"
 
-const std::map<int, std::string> ELF_TYPES = {
+typedef std::map<int, std::string> Index;
+
+const Index ELF_TYPES = {
     {ET_REL, "Relocatable"},
     {ET_EXEC, "Executable"},
     {ET_DYN, "Shared object"},
     {ET_CORE, "Core file"},
 };
 
-const std::map<int, std::string> SECTION_TYPES = {
+const Index SECTION_TYPES = {
     {SHT_NULL, "inactive"},
     {SHT_PROGBITS, "program defined information"},
     {SHT_SYMTAB, "symbol table section"},
@@ -36,7 +38,7 @@ const std::map<int, std::string> SECTION_TYPES = {
     {SHT_AMD64_UNWIND, "unwind information"},
 };
 
-const std::map<int, std::string> SEGMENT_TYPES = {
+const Index SEGMENT_TYPES = {
     {PT_NULL, "Unused"},
     {PT_LOAD, "Loadable segment"},
     {PT_DYNAMIC, "Dynamic linking information segment"},
@@ -59,29 +61,23 @@ const std::map<int, std::string> SEGMENT_TYPES = {
 
 const std::string UNKNOWN_NAME = "Unknown";
 
-const std::string &getElfTypeName(int type) {
-    auto iterator = ELF_TYPES.find(type);
-    if(iterator == ELF_TYPES.end()) {
+const std::string &getNameOrUnknown(const Index &map, int type) {
+    auto iterator = map.find(type);
+    if(iterator == map.end()) {
         return UNKNOWN_NAME;
     } else {
         return iterator->second;
     }
+}
+
+const std::string &getElfTypeName(int type) {
+    return getNameOrUnknown(ELF_TYPES, type);
 }
 
 const std::string &getSectionTypeName(int type) {
-    auto iterator = SECTION_TYPES.find(type);
-    if(iterator == SECTION_TYPES.end()) {
-        return UNKNOWN_NAME;
-    } else {
-        return iterator->second;
-    }
+    return getNameOrUnknown(SECTION_TYPES, type);
 }
 
 const std::string &getSegmentTypeName(int type) {
-    auto iterator = SEGMENT_TYPES.find(type);
-    if(iterator == SEGMENT_TYPES.end()) {
-        return UNKNOWN_NAME;
-    } else {
-        return iterator->second;
-    }
+    return getNameOrUnknown(SEGMENT_TYPES, type);
 }
