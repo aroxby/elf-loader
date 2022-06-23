@@ -93,6 +93,7 @@ ElfLoader::ElfLoader(const string &path) {
     for(int i = 0; i < header.e_phnum; i++) {
         cout << endl;
         cout << "Segment Type: " << (void*)((size_t)pheaders[i].p_type) << endl;
+        cout << "Segment Type Name: " << getSegmentTypeName(pheaders[i].p_type) << endl;
         cout << "Segment Flags: " << (void*)((size_t)pheaders[i].p_flags) << endl;
         cout << "Segment Offset: " << (void*)pheaders[i].p_offset << endl;
         cout << "Segment Virtual Address: " << (void*)pheaders[i].p_vaddr << endl;
