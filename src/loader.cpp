@@ -81,4 +81,24 @@ ElfLoader::ElfLoader(const string &path) {
         cout << "Section Alignment: " << (void*)sheaders[i].sh_addralign << endl;
         cout << "Section Entry Size: " << (void*)sheaders[i].sh_entsize << endl;
     }
+
+    // Load program headers
+    ifs.seekg(header.e_phoff);
+    unique_ptr<Elf64_Phdr[]> pheaders(new Elf64_Phdr[header.e_phnum]);
+    for(int i = 0; i < header.e_phnum; i++) {
+        ifs.read((char*)&pheaders[i], sizeof(Elf64_Phdr));
+    }
+
+    // Dump program headers
+    for(int i = 0; i < header.e_phnum; i++) {
+        cout << endl;
+        cout << "Segment Type: " << (void*)((size_t)pheaders[i].p_type) << endl;
+        cout << "Segment Flags: " << (void*)((size_t)pheaders[i].p_flags) << endl;
+        cout << "Segment Offset: " << (void*)pheaders[i].p_offset << endl;
+        cout << "Segment Virtual Address: " << (void*)pheaders[i].p_vaddr << endl;
+        cout << "Segment Physical Address: " << (void*)pheaders[i].p_paddr << endl;
+        cout << "Segment File Size: " << pheaders[i].p_filesz << endl;
+        cout << "Segment Memory Size: " << pheaders[i].p_memsz << endl;
+        cout << "Segment Alignment: " << (void*)pheaders[i].p_align << endl;
+    }
 }
