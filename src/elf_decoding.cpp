@@ -42,6 +42,7 @@ const std::map<int, std::string> SEGMENT_TYPES = {
     {PT_GNU_EH_FRAME, "Gnu EH Frame?"},
     {PT_GNU_STACK, "Gnu Stack?"},
     {PT_GNU_RELRO, "Gnu Relocate?"},
+    {PT_GNU_PROPERTY, "Gnu Property?"},
     {PT_DUMP_DELTA, "Map for kernel Dumps"},
     {PT_SUNWBSS, "Sun Specific segment"},
     {PT_SUNWSTACK, "Describes the stack segment"},

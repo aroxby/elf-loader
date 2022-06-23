@@ -343,6 +343,7 @@ typedef struct {
 #define	PT_GNU_EH_FRAME	0x6474e550
 #define	PT_GNU_STACK	0x6474e551
 #define	PT_GNU_RELRO	0x6474e552
+#define PT_GNU_PROPERTY	0x6474e553	/* GNU property */
 #define	PT_DUMP_DELTA	0x6fb5d000	/* va->pa map for kernel dumps
 					   (currently arm). */
 #define	PT_LOSUNW	0x6ffffffa
