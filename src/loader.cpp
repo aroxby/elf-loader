@@ -37,6 +37,7 @@ ElfLoader::ElfLoader(const string &path) {
 
     // Dump main header
     cout << "Type: " << header.e_type << endl;
+    cout << "Type Name: " << getElfTypeName(header.e_type) << endl;
     cout << "Machine: " << header.e_machine << endl;
     cout << "Version: " << header.e_version << endl;
     cout << "Entry point: " << (void*)header.e_entry << endl;
@@ -71,7 +72,8 @@ ElfLoader::ElfLoader(const string &path) {
         cout << endl;
         cout << "Section Name Offset: " << sheaders[i].sh_name << endl;
         cout << "Section Name: " << &strings[sheaders[i].sh_name] << endl;
-        cout << "Section Type: " << getSectionTypeName(sheaders[i].sh_type) << endl;
+        cout << "Section Type: " << (void*)((size_t)sheaders[i].sh_type) << endl;
+        cout << "Section Type Name: " << getSectionTypeName(sheaders[i].sh_type) << endl;
         cout << "Section Flags: " << (void*)sheaders[i].sh_flags << endl;
         cout << "Section Address: " << (void*)sheaders[i].sh_addr << endl;
         cout << "Section Offset: " << (void*)sheaders[i].sh_offset << endl;

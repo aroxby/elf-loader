@@ -3,6 +3,7 @@
 
 #include <string>
 
+const std::string &getElfTypeName(int type);
 const std::string &getSectionTypeName(int type);
 const std::string &getSegmentTypeName(int type);
 
