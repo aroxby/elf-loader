@@ -3,6 +3,13 @@
 #include "elf_common.h"
 #include "elf_decoding.h"
 
+const std::map<int, std::string> ELF_TYPES = {
+    {ET_REL, "Relocatable"},
+    {ET_EXEC, "Executable"},
+    {ET_DYN, "Shared object"},
+    {ET_CORE, "Core file"},
+};
+
 const std::map<int, std::string> SECTION_TYPES = {
     {SHT_NULL, "inactive"},
     {SHT_PROGBITS, "program defined information"},
@@ -51,6 +58,15 @@ const std::map<int, std::string> SEGMENT_TYPES = {
 };
 
 const std::string UNKNOWN_NAME = "Unknown";
+
+const std::string &getElfTypeName(int type) {
+    auto iterator = ELF_TYPES.find(type);
+    if(iterator == ELF_TYPES.end()) {
+        return UNKNOWN_NAME;
+    } else {
+        return iterator->second;
+    }
+}
 
 const std::string &getSectionTypeName(int type) {
     auto iterator = SECTION_TYPES.find(type);
