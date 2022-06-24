@@ -1,5 +1,6 @@
 #include <map>
 #include <string>
+#include <sstream>
 #include "elf_common.h"
 #include "elf_decoding.h"
 
@@ -80,4 +81,37 @@ const std::string &getSectionTypeName(int type) {
 
 const std::string &getSegmentTypeName(int type) {
     return getNameOrUnknown(SEGMENT_TYPES, type);
+}
+
+std::string sectionFlagsToString(int flags) {
+    const static Index SH_FLAGS = {
+        {SHF_WRITE, "SHF_WRITE"},
+        {SHF_ALLOC, "SHF_ALLOC"},
+        {SHF_EXECINSTR, "SHF_EXECINSTR"},
+        {SHF_MERGE, "SHF_MERGE"},
+        {SHF_STRINGS, "SHF_STRINGS"},
+        {SHF_INFO_LINK, "SHF_INFO_LINK"},
+        {SHF_LINK_ORDER, "SHF_LINK_ORDER"},
+        {SHF_OS_NONCONFORMING, "SHF_OS_NONCONFORMING"},
+        {SHF_GROUP, "SHF_GROUP"},
+        {SHF_TLS, "SHF_TLS"},
+        {SHF_MASKOS, "SHF_MASKOS"},
+        {SHF_MASKPROC, "SHF_MASKPROC"},
+    };
+    const static std::string sep(" | ");
+
+    if(!flags) {
+        return "";
+    } else {
+        std::stringstream sstream;
+        for(auto iterator : SH_FLAGS) {
+            if(flags & iterator.first) {
+                sstream << sep << iterator.second;
+            }
+        }
+
+        std::string flags_str = sstream.str();
+        flags_str.erase(0, sep.length());
+        return flags_str;
+    }
 }

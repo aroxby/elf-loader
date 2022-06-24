@@ -74,7 +74,9 @@ ElfLoader::ElfLoader(const string &path) {
         cout << "Section Name: " << &strings[sheaders[i].sh_name] << endl;
         cout << "Section Type: " << (void*)((size_t)sheaders[i].sh_type) << endl;
         cout << "Section Type Name: " << getSectionTypeName(sheaders[i].sh_type) << endl;
-        cout << "Section Flags: " << (void*)sheaders[i].sh_flags << endl;
+        cout << "Section Flags: "
+            << (void*)sheaders[i].sh_flags
+            << " (" << sectionFlagsToString(sheaders[i].sh_flags) << ')' << endl;
         cout << "Section Address: " << (void*)sheaders[i].sh_addr << endl;
         cout << "Section Offset: " << (void*)sheaders[i].sh_offset << endl;
         cout << "Section Size: " << sheaders[i].sh_size << endl;
