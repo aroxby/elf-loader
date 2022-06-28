@@ -98,7 +98,9 @@ ElfLoader::ElfLoader(const string &path) {
         cout << endl;
         cout << "Segment Type: " << (void*)((size_t)pheaders[i].p_type) << endl;
         cout << "Segment Type Name: " << getSegmentTypeName(pheaders[i].p_type) << endl;
-        cout << "Segment Flags: " << (void*)((size_t)pheaders[i].p_flags) << endl;
+        cout << "Segment Flags: "
+            << (void*)((size_t)pheaders[i].p_flags)
+            << " (" << segmentFlagsToString(pheaders[i].p_flags) << ')' << endl;
         cout << "Segment Offset: " << (void*)pheaders[i].p_offset << endl;
         cout << "Segment Virtual Address: " << (void*)pheaders[i].p_vaddr << endl;
         cout << "Segment Physical Address: " << (void*)pheaders[i].p_paddr << endl;

@@ -7,5 +7,6 @@ const std::string &getElfTypeName(int type);
 const std::string &getSectionTypeName(int type);
 const std::string &getSegmentTypeName(int type);
 std::string sectionFlagsToString(int flags);
+std::string segmentFlagsToString(int flags);
 
 #endif//__INC_ELF_DECODING_H_

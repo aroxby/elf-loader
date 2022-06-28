@@ -79,8 +79,27 @@ const std::string &getSegmentTypeName(int type) {
     return getNameOrUnknown(segment_types, type);
 }
 
+std::string flagsToString(const Index &map, int flags) {
+    const static std::string sep(" | ");
+
+    if(!flags) {
+        return "";
+    } else {
+        std::stringstream sstream;
+        for(auto iterator : map) {
+            if(flags & iterator.first) {
+                sstream << sep << iterator.second;
+            }
+        }
+
+        std::string flags_str = sstream.str();
+        flags_str.erase(0, sep.length());
+        return flags_str;
+    }
+}
+
 std::string sectionFlagsToString(int flags) {
-    const static Index SH_FLAGS = {
+    const static Index section_flags = {
         {SHF_WRITE, "SHF_WRITE"},
         {SHF_ALLOC, "SHF_ALLOC"},
         {SHF_EXECINSTR, "SHF_EXECINSTR"},
@@ -94,20 +113,16 @@ std::string sectionFlagsToString(int flags) {
         {SHF_MASKOS, "SHF_MASKOS"},
         {SHF_MASKPROC, "SHF_MASKPROC"},
     };
-    const static std::string sep(" | ");
+    return flagsToString(section_flags, flags);
+}
 
-    if(!flags) {
-        return "";
-    } else {
-        std::stringstream sstream;
-        for(auto iterator : SH_FLAGS) {
-            if(flags & iterator.first) {
-                sstream << sep << iterator.second;
-            }
-        }
-
-        std::string flags_str = sstream.str();
-        flags_str.erase(0, sep.length());
-        return flags_str;
-    }
+std::string segmentFlagsToString(int flags) {
+    const static Index segment_flags = {
+        {PF_X, "PF_X"},
+        {PF_W, "PF_W"},
+        {PF_R, "PF_R"},
+        {PF_MASKOS, "PF_MASKOS"},
+        {PF_MASKPROC, "PF_MASKPROC"},
+    };
+    return flagsToString(segment_flags, flags);
 }
