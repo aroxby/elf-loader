@@ -81,6 +81,7 @@ const std::string &getSegmentTypeName(int type) {
 
 std::string flagsToString(const Index &map, int flags) {
     const static std::string sep(" | ");
+    const static std::string extra("?");
 
     if(!flags) {
         return "";
@@ -90,6 +91,10 @@ std::string flagsToString(const Index &map, int flags) {
             if(flags & iterator.first) {
                 sstream << sep << iterator.second;
             }
+            flags &= ~iterator.first;
+        }
+        if(flags) {
+            sstream << sep << extra;
         }
 
         std::string flags_str = sstream.str();
