@@ -1,6 +1,5 @@
 #include <fstream>
 #include <memory>
-#include <vector>
 #include "exceptions.h"
 #include "elf_decoding.h"
 #include "loader.h"
