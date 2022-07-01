@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "loader.h"
 using namespace std;
 
@@ -9,7 +10,12 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    ElfLoader loader(argv[1]);
+    ifstream ifs;
+    ifs.exceptions(ifstream::eofbit | ifstream::failbit | ifstream::badbit);
+    ifs.open(argv[1], ios_base::in | ios_base::binary);
+
+    ElfImage library(ifs);
+    library.dump(cout);
 
     return 0;
 }
