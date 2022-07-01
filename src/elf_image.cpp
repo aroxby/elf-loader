@@ -1,4 +1,5 @@
-#include <fstream>
+#include <istream>
+#include <string>
 #include <memory>
 #include "exceptions.h"
 #include "elf_decoding.h"
@@ -6,9 +7,9 @@
 using namespace std;
 
 
-ElfImage::ElfImage(ifstream &ifs) {
+ElfImage::ElfImage(istream &is) {
     // Read the header
-    ifs.read((char*)&elf_header, sizeof(elf_header));
+    is.read((char*)&elf_header, sizeof(elf_header));
 
     if(!IS_ELF(elf_header)) {
         throw InvalidSignature();
@@ -27,26 +28,61 @@ ElfImage::ElfImage(ifstream &ifs) {
     }
 
     // Load section headers
-    ifs.seekg(elf_header.e_shoff);
+    is.seekg(elf_header.e_shoff);
     section_headers = unique_ptr<Elf64_Shdr[]>(new Elf64_Shdr[elf_header.e_shnum]);
     for(int i = 0; i < elf_header.e_shnum; i++) {
-        ifs.read((char*)&section_headers[i], sizeof(Elf64_Shdr));
+        is.read((char*)&section_headers[i], sizeof(Elf64_Shdr));
     }
 
     // Load string section
-    strings = std::unique_ptr<char[]>(new char[section_headers[elf_header.e_shstrndx].sh_size]);
-    ifs.seekg(section_headers[elf_header.e_shstrndx].sh_offset);
-    ifs.read(&strings[0], section_headers[elf_header.e_shstrndx].sh_size);
+    strings = unique_ptr<char[]>(new char[section_headers[elf_header.e_shstrndx].sh_size]);
+    is.seekg(section_headers[elf_header.e_shstrndx].sh_offset);
+    is.read(&strings[0], section_headers[elf_header.e_shstrndx].sh_size);
 
     // Load program headers
-    ifs.seekg(elf_header.e_phoff);
+    is.seekg(elf_header.e_phoff);
     program_headers = unique_ptr<Elf64_Phdr[]>(new Elf64_Phdr[elf_header.e_phnum]);
     for(int i = 0; i < elf_header.e_phnum; i++) {
-        ifs.read((char*)&program_headers[i], sizeof(Elf64_Phdr));
+        is.read((char*)&program_headers[i], sizeof(Elf64_Phdr));
+    }
+
+    allocateMemory();
+
+    // Selectively load segments
+    for(int i = 0; i < elf_header.e_phnum; i++) {
+        switch(program_headers[i].p_type) {
+        case PT_LOAD:
+            loadSegment(program_headers[i], is);
+        }
     }
 }
 
-void ElfImage::dump(std::ostream &os) {
+void ElfImage::allocateMemory() {
+    Elf64_Addr highestOffset = 0;
+    Elf64_Xword size = 0;
+
+    // Get the highest described virtual address
+    for(int i = 0; i < elf_header.e_phnum; i++) {
+        switch(program_headers[i].p_type) {
+        case PT_LOAD:
+            // These SHOULD already be sorted by address but just in case...
+            if(program_headers[i].p_vaddr > highestOffset) {
+                highestOffset = program_headers[i].p_vaddr;
+                size = program_headers[i].p_memsz;
+            }
+        }
+    }
+
+    image_base = unique_ptr<char[]>(new char[highestOffset + size]);
+}
+
+void ElfImage::loadSegment(const Elf64_Phdr &header, istream &is) {
+    is.seekg(header.p_offset);
+    char *ptr = &image_base[header.p_vaddr];
+    is.read(ptr, header.p_memsz);
+}
+
+void ElfImage::dump(ostream &os) {
     // Dump main header
     os << "Type: " << elf_header.e_type << endl;
     os << "Type Name: " << getElfTypeName(elf_header.e_type) << endl;
