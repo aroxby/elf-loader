@@ -2,7 +2,7 @@
 #include <memory>
 #include "exceptions.h"
 #include "elf_decoding.h"
-#include "loader.h"
+#include "elf_image.h"
 using namespace std;
 
 

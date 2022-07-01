@@ -1,5 +1,5 @@
-#ifndef __INC_LOADER_H_
-#define __INC_LOADER_H_
+#ifndef __INC_ELF_IMAGE_H_
+#define __INC_ELF_IMAGE_H_
 
 #include <string>
 #include <memory>
@@ -18,4 +18,4 @@ private:
     std::unique_ptr<Elf64_Phdr[]> program_headers;
 };
 
-#endif//__INC_LOADER_H_
+#endif//__INC_ELF_IMAGE_H_
