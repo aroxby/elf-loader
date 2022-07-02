@@ -38,6 +38,7 @@ private:
     std::unique_ptr<char[]> image_base;
 
     ElfSymbolCollection symbols;
+    ElfSymbolCollection dynamic_symbols;
 };
 
 #endif//__INC_ELF_IMAGE_H_

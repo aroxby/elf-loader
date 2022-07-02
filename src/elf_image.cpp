@@ -59,6 +59,14 @@ ElfImage::ElfImage(istream &is) {
             loadSymbolTable(
                 section_headers[i], section_headers[section_headers[i].sh_link], symbols, is
             );
+            break;
+
+        case SHT_DYNSYM:
+            loadSymbolTable(
+                section_headers[i], section_headers[section_headers[i].sh_link], dynamic_symbols, is
+            );
+            break;
+
         }
     }
 
@@ -202,5 +210,25 @@ void ElfImage::dump(ostream &os) {
             << &section_strings[section_headers[section_index_for_name].sh_name] << endl;
         os << "Symbol Value: " << (void*)symbols.symbols[i].st_value << endl;
         os << "Symbol Size: " << symbols.symbols[i].st_size << endl;
+    }
+
+    // Dump dynamic symbols
+    for(int i = 0; i < dynamic_symbols.num_symbols; i++) {
+        auto section_index_for_name = _inRange(
+            dynamic_symbols.symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
+        ) ? 0 : dynamic_symbols.symbols[i].st_shndx;
+        os << endl;
+        os << "Symbol Name Offset: " << dynamic_symbols.symbols[i].st_name << endl;
+        os << "Symbol Name: " << &dynamic_symbols.strings[dynamic_symbols.symbols[i].st_name] << endl;
+        os << "Symbol Bind: " << ELF64_ST_BIND(dynamic_symbols.symbols[i].st_info)
+            << " (" << symbolBindToString(ELF64_ST_BIND(dynamic_symbols.symbols[i].st_info)) << ')' << endl;
+        os << "Symbol Type: " << ELF64_ST_TYPE(dynamic_symbols.symbols[i].st_info)
+            << " (" << symbolTypeToString(ELF64_ST_TYPE(dynamic_symbols.symbols[i].st_info)) << ')' << endl;
+        os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(dynamic_symbols.symbols[i].st_other) << endl;
+        os << "Symbol Section Index: " << dynamic_symbols.symbols[i].st_shndx << endl;
+        os << "Symbol Section Name: "
+            << &section_strings[section_headers[section_index_for_name].sh_name] << endl;
+        os << "Symbol Value: " << (void*)dynamic_symbols.symbols[i].st_value << endl;
+        os << "Symbol Size: " << dynamic_symbols.symbols[i].st_size << endl;
     }
 }
