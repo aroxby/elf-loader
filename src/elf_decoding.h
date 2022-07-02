@@ -11,6 +11,9 @@ const std::string &elfTypeToString(int type);
 const std::string &sectionTypeToString(int type);
 const std::string &segmentTypeToString(int type);
 
+const std::string &symbolBindToString(int type);
+const std::string &symbolTypeToString(int type);
+
 std::string sectionFlagsToString(int flags);
 std::string segmentFlagsToString(int flags);
 

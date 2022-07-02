@@ -142,6 +142,30 @@ const std::string &segmentTypeToString(int type) {
     return getNameOrUnknown(segment_types, type);
 }
 
+const std::string &symbolBindToString(int type) {
+    const static Index bind_types = {
+        {STB_LOCAL, "STB_LOCAL"},
+        {STB_GLOBAL, "STB_GLOBAL"},
+        {STB_WEAK, "STB_WEAK"},
+    };
+    return getNameOrUnknown(bind_types, type);
+}
+
+const std::string &symbolTypeToString(int type) {
+    const static Index type_types = {
+        {STT_NOTYPE, "STT_NOTYPE"},
+        {STT_OBJECT, "STT_OBJECT"},
+        {STT_FUNC, "STT_FUNC"},
+        {STT_SECTION, "STT_SECTION"},
+        {STT_FILE, "STT_FILE"},
+        {STT_COMMON, "STT_COMMON"},
+        {STT_TLS, "STT_TLS"},
+        {STT_NUM, "STT_NUM"},
+        {STT_GNU_IFUNC, "STT_GNU_IFUNC"},
+    };
+    return getNameOrUnknown(type_types, type);
+}
+
 std::string flagsToString(const Index &map, int flags) {
     const static std::string sep(" | ");
     const static std::string extra("?");
