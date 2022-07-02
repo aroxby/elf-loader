@@ -112,7 +112,10 @@ void ElfImage::dump(ostream &os) {
         os << "Section Address: " << (void*)section_headers[i].sh_addr << endl;
         os << "Section Offset: " << (void*)section_headers[i].sh_offset << endl;
         os << "Section Size: " << section_headers[i].sh_size << endl;
-        os << "Related Section: " << section_headers[i].sh_link << endl;
+        os << "Related Section: "
+            << section_headers[i].sh_link << " ("
+            << &strings[section_headers[section_headers[i].sh_link].sh_name]
+            << ')' << endl;
         os << "Section Info: " << (void*)((size_t)section_headers[i].sh_info) << endl;
         os << "Section Alignment: " << (void*)section_headers[i].sh_addralign << endl;
         os << "Section Entry Size: " << (void*)section_headers[i].sh_entsize << endl;
