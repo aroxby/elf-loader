@@ -23,9 +23,23 @@ public:
     }
 };
 
-class UnsupportedFileConfiguration : public ElfLoaderException {
+class UnsupportedSectionConfiguration : public ElfLoaderException {
 public:
     const char *what() const noexcept {
-        return "File configuration is not supported";
+        return "File section size is not supported";
+    }
+};
+
+class UnsupportedSymbolConfiguration : public ElfLoaderException {
+public:
+    const char *what() const noexcept {
+        return "File symbol size is not supported";
+    }
+};
+
+class MultipleSymbolTables : public ElfLoaderException {
+public:
+    const char *what() const noexcept {
+        return "Multiple symbol tables are not supported";
     }
 };

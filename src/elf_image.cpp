@@ -32,7 +32,7 @@ ElfImage::ElfImage(istream &is) {
     }
 
     if(elf_header.e_shentsize != sizeof(Elf64_Shdr)) {
-        throw UnsupportedFileConfiguration();
+        throw UnsupportedSectionConfiguration();
     }
 
     // Load section headers
@@ -79,11 +79,12 @@ unique_ptr<char[]> ElfImage::loadStringTable(const Elf64_Shdr &header, istream &
 }
 
 void ElfImage::loadSymbolTable(const Elf64_Shdr &header, istream &is) {
-    // TODO: throw if we already loaded symbols
+    if(symbols) {
+        throw MultipleSymbolTables();
+    }
 
     if(header.sh_size % sizeof(Elf64_Sym) != 0) {
-        // TODO: Are we okay with reusing this exception type?
-        throw UnsupportedFileConfiguration();
+        throw UnsupportedSymbolConfiguration();
     }
 
     num_symbols = header.sh_size / sizeof(Elf64_Sym);
