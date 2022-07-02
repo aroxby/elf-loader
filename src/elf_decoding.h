@@ -6,6 +6,11 @@
 const std::string &getElfTypeName(int type);
 const std::string &getSectionTypeName(int type);
 const std::string &getSegmentTypeName(int type);
+
+const std::string &elfTypeToString(int type);
+const std::string &sectionTypeToString(int type);
+const std::string &segmentTypeToString(int type);
+
 std::string sectionFlagsToString(int flags);
 std::string segmentFlagsToString(int flags);
 

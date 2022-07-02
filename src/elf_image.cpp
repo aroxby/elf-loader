@@ -84,7 +84,8 @@ void ElfImage::loadSegment(const Elf64_Phdr &header, istream &is) {
 
 void ElfImage::dump(ostream &os) {
     // Dump main header
-    os << "Type: " << elf_header.e_type << endl;
+    os << "Type: " << elf_header.e_type
+        << " (" << elfTypeToString(elf_header.e_type) << ')' << endl;
     os << "Type Name: " << getElfTypeName(elf_header.e_type) << endl;
     os << "Machine: " << elf_header.e_machine << endl;
     os << "Version: " << elf_header.e_version << endl;
@@ -104,10 +105,10 @@ void ElfImage::dump(ostream &os) {
         os << endl;
         os << "Section Name Offset: " << section_headers[i].sh_name << endl;
         os << "Section Name: " << &strings[section_headers[i].sh_name] << endl;
-        os << "Section Type: " << (void*)((size_t)section_headers[i].sh_type) << endl;
+        os << "Section Type: " << (void*)((size_t)section_headers[i].sh_type)
+            << " (" << sectionTypeToString(section_headers[i].sh_type) << ')' << endl;
         os << "Section Type Name: " << getSectionTypeName(section_headers[i].sh_type) << endl;
-        os << "Section Flags: "
-            << (void*)section_headers[i].sh_flags
+        os << "Section Flags: " << (void*)section_headers[i].sh_flags
             << " (" << sectionFlagsToString(section_headers[i].sh_flags) << ')' << endl;
         os << "Section Address: " << (void*)section_headers[i].sh_addr << endl;
         os << "Section Offset: " << (void*)section_headers[i].sh_offset << endl;
@@ -124,10 +125,10 @@ void ElfImage::dump(ostream &os) {
     // Dump program headers
     for(int i = 0; i < elf_header.e_phnum; i++) {
         os << endl;
-        os << "Segment Type: " << (void*)((size_t)program_headers[i].p_type) << endl;
+        os << "Segment Type: " << (void*)((size_t)program_headers[i].p_type)
+            << " (" << segmentTypeToString(program_headers[i].p_type) << ')' << endl;
         os << "Segment Type Name: " << getSegmentTypeName(program_headers[i].p_type) << endl;
-        os << "Segment Flags: "
-            << (void*)((size_t)program_headers[i].p_flags)
+        os << "Segment Flags: " << (void*)((size_t)program_headers[i].p_flags)
             << " (" << segmentFlagsToString(program_headers[i].p_flags) << ')' << endl;
         os << "Segment Offset: " << (void*)program_headers[i].p_offset << endl;
         os << "Segment Virtual Address: " << (void*)program_headers[i].p_vaddr << endl;

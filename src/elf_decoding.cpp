@@ -79,6 +79,69 @@ const std::string &getSegmentTypeName(int type) {
     return getNameOrUnknown(segment_types, type);
 }
 
+const std::string &elfTypeToString(int type) {
+    const static Index elf_types = {
+        {ET_REL, "ET_REL"},
+        {ET_EXEC, "ET_EXEC"},
+        {ET_DYN, "ET_DYN"},
+        {ET_CORE, "ET_CORE"},
+    };
+    return getNameOrUnknown(elf_types, type);
+}
+
+const std::string &sectionTypeToString(int type) {
+    const static Index section_types = {
+        {SHT_NULL, "SHT_NULL"},
+        {SHT_PROGBITS, "SHT_PROGBITS"},
+        {SHT_SYMTAB, "SHT_SYMTAB"},
+        {SHT_STRTAB, "SHT_STRTAB"},
+        {SHT_RELA, "SHT_RELA"},
+        {SHT_HASH, "SHT_HASH"},
+        {SHT_DYNAMIC, "SHT_DYNAMIC"},
+        {SHT_NOTE, "SHT_NOTE"},
+        {SHT_NOBITS, "SHT_NOBITS"},
+        {SHT_REL, "SHT_REL"},
+        {SHT_SHLIB, "SHT_SHLIB"},
+        {SHT_DYNSYM, "SHT_DYNSYM"},
+        {SHT_INIT_ARRAY, "SHT_INIT_ARRAY"},
+        {SHT_FINI_ARRAY, "SHT_FINI_ARRAY"},
+        {SHT_PREINIT_ARRAY, "SHT_PREINIT_ARRAY"},
+        {SHT_GROUP, "SHT_GROUP"},
+        {SHT_SYMTAB_SHNDX, "SHT_SYMTAB_SHNDX"},
+        {SHT_GNU_HASH, "SHT_GNU_HASH"},
+        {SHT_GNU_LIBLIST, "SHT_GNU_LIBLIST"},
+        {SHT_GNU_verdef, "SHT_GNU_verdef"},
+        {SHT_GNU_verneed, "SHT_GNU_verneed"},
+        {SHT_GNU_versym, "SHT_GNU_versym"},
+        {SHT_AMD64_UNWIND, "SHT_AMD64_UNWIND"},
+    };
+    return getNameOrUnknown(section_types, type);
+}
+
+const std::string &segmentTypeToString(int type) {
+    const static Index segment_types = {
+        {PT_NULL, "PT_NULL"},
+        {PT_LOAD, "PT_LOAD"},
+        {PT_DYNAMIC, "PT_DYNAMIC"},
+        {PT_INTERP, "PT_INTERP"},
+        {PT_NOTE, "PT_NOTE"},
+        {PT_SHLIB, "PT_SHLIB"},
+        {PT_PHDR, "PT_PHDR"},
+        {PT_TLS, "PT_TLS"},
+        {PT_SUNW_UNWIND, "PT_SUNW_UNWIND"},
+        {PT_GNU_EH_FRAME, "PT_GNU_EH_FRAME"},
+        {PT_GNU_STACK, "PT_GNU_STACK"},
+        {PT_GNU_RELRO, "PT_GNU_RELRO"},
+        {PT_GNU_PROPERTY, "PT_GNU_PROPERTY"},
+        {PT_DUMP_DELTA, "PT_DUMP_DELTA"},
+        {PT_SUNWBSS, "PT_SUNWBSS"},
+        {PT_SUNWSTACK, "PT_SUNWSTACK"},
+        {PT_SUNWDTRACE, "PT_SUNWDTRACE"},
+        {PT_SUNWCAP, "PT_SUNWCAP"},
+    };
+    return getNameOrUnknown(segment_types, type);
+}
+
 std::string flagsToString(const Index &map, int flags) {
     const static std::string sep(" | ");
     const static std::string extra("?");
