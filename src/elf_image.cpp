@@ -56,7 +56,9 @@ ElfImage::ElfImage(istream &is) {
     for(int i = 0; i < elf_header.e_shnum; i++) {
         switch(section_headers[i].sh_type) {
         case SHT_SYMTAB:
-            loadSymbolTable(section_headers[i], is);
+            loadSymbolTable(
+                section_headers[i], section_headers[section_headers[i].sh_link], symbols, is
+            );
         }
     }
 
@@ -78,21 +80,26 @@ unique_ptr<char[]> ElfImage::loadStringTable(const Elf64_Shdr &header, istream &
     return strings;
 }
 
-void ElfImage::loadSymbolTable(const Elf64_Shdr &header, istream &is) {
-    if(symbols) {
+void ElfImage::loadSymbolTable(
+    const Elf64_Shdr &symbol_header,
+    const Elf64_Shdr &string_header,
+    ElfSymbolCollection &symbols,
+    std::istream &is
+) {
+    if(symbols.symbols) {
         throw MultipleSymbolTables();
     }
 
-    if(header.sh_size % sizeof(Elf64_Sym) != 0) {
+    if(symbol_header.sh_size % sizeof(Elf64_Sym) != 0) {
         throw UnsupportedSymbolConfiguration();
     }
 
-    num_symbols = header.sh_size / sizeof(Elf64_Sym);
-    symbols = unique_ptr<Elf64_Sym[]>(new Elf64_Sym[num_symbols]);
-    is.seekg(header.sh_offset);
-    is.read((char*)&symbols[0], header.sh_size);
+    symbols.num_symbols = symbol_header.sh_size / sizeof(Elf64_Sym);
+    symbols.symbols = unique_ptr<Elf64_Sym[]>(new Elf64_Sym[symbols.num_symbols]);
+    is.seekg(symbol_header.sh_offset);
+    is.read((char*)&symbols.symbols[0], symbol_header.sh_size);
 
-    symbol_strings = loadStringTable(section_headers[header.sh_link], is);
+    symbols.strings = loadStringTable(string_header, is);
 }
 
 void ElfImage::allocateMemory() {
@@ -177,23 +184,23 @@ void ElfImage::dump(ostream &os) {
     }
 
     // Dump symbols
-    for(int i = 0; i < num_symbols; i++) {
+    for(int i = 0; i < symbols.num_symbols; i++) {
         auto section_index_for_name = _inRange(
-            symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
-        ) ? 0 : symbols[i].st_shndx;
+            symbols.symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
+        ) ? 0 : symbols.symbols[i].st_shndx;
         os << endl;
-        os << "Symbol Name Offset: " << symbols[i].st_name << endl;
-        os << "Symbol Name: " << &symbol_strings[symbols[i].st_name] << endl;
-        os << "Symbol Bind: " << ELF64_ST_BIND(symbols[i].st_info)
-            << " (" << symbolBindToString(ELF64_ST_BIND(symbols[i].st_info)) << ')' << endl;
-        os << "Symbol Type: " << ELF64_ST_TYPE(symbols[i].st_info)
-            << " (" << symbolTypeToString(ELF64_ST_TYPE(symbols[i].st_info)) << ')' << endl;
+        os << "Symbol Name Offset: " << symbols.symbols[i].st_name << endl;
+        os << "Symbol Name: " << &symbols.strings[symbols.symbols[i].st_name] << endl;
+        os << "Symbol Bind: " << ELF64_ST_BIND(symbols.symbols[i].st_info)
+            << " (" << symbolBindToString(ELF64_ST_BIND(symbols.symbols[i].st_info)) << ')' << endl;
+        os << "Symbol Type: " << ELF64_ST_TYPE(symbols.symbols[i].st_info)
+            << " (" << symbolTypeToString(ELF64_ST_TYPE(symbols.symbols[i].st_info)) << ')' << endl;
         // Strangely, elf_common.h contains 7 constants for this despite it being 1 bit
-        os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(symbols[i].st_other) << endl;
-        os << "Symbol Section Index: " << symbols[i].st_shndx << endl;
+        os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(symbols.symbols[i].st_other) << endl;
+        os << "Symbol Section Index: " << symbols.symbols[i].st_shndx << endl;
         os << "Symbol Section Name: "
             << &section_strings[section_headers[section_index_for_name].sh_name] << endl;
-        os << "Symbol Value: " << (void*)symbols[i].st_value << endl;
-        os << "Symbol Size: " << symbols[i].st_size << endl;
+        os << "Symbol Value: " << (void*)symbols.symbols[i].st_value << endl;
+        os << "Symbol Size: " << symbols.symbols[i].st_size << endl;
     }
 }
