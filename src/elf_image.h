@@ -4,13 +4,16 @@
 #include <istream>
 #include <string>
 #include <memory>
+#include <map>
 #include "elf64.h"
 
 class ElfSymbolCollection {
 public:
+    ElfSymbolCollection() : num_symbols(0), symbols(nullptr), strings(nullptr) { }
+
     size_t num_symbols;
-    std::unique_ptr<Elf64_Sym[]> symbols;
-    std::unique_ptr<char[]> strings;
+    Elf64_Sym *symbols;
+    const char *strings;
 };
 
 class ElfImage {
@@ -20,22 +23,24 @@ public:
     void dump(std::ostream &os);
 
 private:
-    static std::unique_ptr<char[]> loadStringTable(const Elf64_Shdr &header, std::istream &is);
-    static void loadSymbolTable(
-        const Elf64_Shdr &symbol_header,
-        const Elf64_Shdr &string_header,
-        ElfSymbolCollection &symbols,
-        std::istream &is
+    const char *loadSection(Elf64_Half index, std::istream &is);
+    void loadSymbolTable(
+        Elf64_Half symbol_index,
+        Elf64_Half string_index,
+        std::istream &is,
+        ElfSymbolCollection &symbols
     );
 
-    void allocateMemory();
+    void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
 
     Elf64_Ehdr elf_header;
     std::unique_ptr<Elf64_Shdr[]> section_headers;
     std::unique_ptr<Elf64_Phdr[]> program_headers;
-    std::unique_ptr<char[]> section_strings;
+    const char *section_strings;
     std::unique_ptr<char[]> image_base;
+
+    std::map<Elf64_Half, std::unique_ptr<char[]>> aux_sections;
 
     ElfSymbolCollection symbols;
     ElfSymbolCollection dynamic_symbols;

@@ -50,27 +50,9 @@ ElfImage::ElfImage(istream &is) {
     }
 
     // Load section header string table by known index
-    section_strings = loadStringTable(section_headers[elf_header.e_shstrndx], is);
+    section_strings = loadSection(elf_header.e_shstrndx, is);
 
-    // Selectively load section data
-    for(int i = 0; i < elf_header.e_shnum; i++) {
-        switch(section_headers[i].sh_type) {
-        case SHT_SYMTAB:
-            loadSymbolTable(
-                section_headers[i], section_headers[section_headers[i].sh_link], symbols, is
-            );
-            break;
-
-        case SHT_DYNSYM:
-            loadSymbolTable(
-                section_headers[i], section_headers[section_headers[i].sh_link], dynamic_symbols, is
-            );
-            break;
-
-        }
-    }
-
-    allocateMemory();
+    allocateAddressSpace();
 
     // Selectively load segments
     for(int i = 0; i < elf_header.e_phnum; i++) {
@@ -79,38 +61,60 @@ ElfImage::ElfImage(istream &is) {
             loadSegment(program_headers[i], is);
         }
     }
+
+    // Selectively load section data
+    for(int i = 0; i < elf_header.e_shnum; i++) {
+        switch(section_headers[i].sh_type) {
+        case SHT_SYMTAB:
+            loadSymbolTable(i, section_headers[i].sh_link, is, symbols);
+            break;
+
+        case SHT_DYNSYM:
+            loadSymbolTable(i, section_headers[i].sh_link, is, dynamic_symbols);
+            break;
+
+        }
+    }
 }
 
-unique_ptr<char[]> ElfImage::loadStringTable(const Elf64_Shdr &header, istream &is) {
-    auto strings = unique_ptr<char[]>(new char[header.sh_size]);
-    is.seekg(header.sh_offset);
-    is.read(&strings[0], header.sh_size);
-    return strings;
+// TODO: These pointers die when the ElfImage is unloaded.  Can we use a shared_ptr?
+const char *ElfImage::loadSection(Elf64_Half index, istream &is) {
+    char *ptr;
+    if(section_headers[index].sh_addr) {  // Resident Section
+        ptr = &image_base[section_headers[index].sh_addr];
+    } else {  // Non resident section
+        auto &ptr_ref = aux_sections[index];
+        ptr = ptr_ref.get();
+        if(!ptr) {
+            ptr_ref = unique_ptr<char[]>(new char[section_headers[index].sh_size]);
+            ptr = ptr_ref.get();
+            is.seekg(section_headers[index].sh_offset);
+            is.read(ptr, section_headers[index].sh_size);
+        }
+    }
+    return ptr;
 }
 
 void ElfImage::loadSymbolTable(
-    const Elf64_Shdr &symbol_header,
-    const Elf64_Shdr &string_header,
-    ElfSymbolCollection &symbols,
-    std::istream &is
+    Elf64_Half symbol_index,
+    Elf64_Half string_index,
+    istream &is,
+    ElfSymbolCollection &symbols
 ) {
     if(symbols.symbols) {
         throw MultipleSymbolTables();
     }
 
-    if(symbol_header.sh_size % sizeof(Elf64_Sym) != 0) {
+    if(section_headers[symbol_index].sh_size % sizeof(Elf64_Sym) != 0) {
         throw UnsupportedSymbolConfiguration();
     }
 
-    symbols.num_symbols = symbol_header.sh_size / sizeof(Elf64_Sym);
-    symbols.symbols = unique_ptr<Elf64_Sym[]>(new Elf64_Sym[symbols.num_symbols]);
-    is.seekg(symbol_header.sh_offset);
-    is.read((char*)&symbols.symbols[0], symbol_header.sh_size);
-
-    symbols.strings = loadStringTable(string_header, is);
+    symbols.num_symbols = section_headers[symbol_index].sh_size / sizeof(Elf64_Sym);
+    symbols.symbols = (Elf64_Sym*)loadSection(symbol_index, is);
+    symbols.strings = loadSection(string_index, is);
 }
 
-void ElfImage::allocateMemory() {
+void ElfImage::allocateAddressSpace() {
     Elf64_Addr highestOffset = 0;
     Elf64_Xword size = 0;
 
