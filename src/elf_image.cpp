@@ -66,11 +66,11 @@ ElfImage::ElfImage(istream &is) {
     for(int i = 0; i < elf_header.e_shnum; i++) {
         switch(section_headers[i].sh_type) {
         case SHT_SYMTAB:
-            loadSymbolTable(i, section_headers[i].sh_link, is, symbols);
+            loadSymbolTable(i, section_headers[i].sh_link, is);
             break;
 
         case SHT_DYNSYM:
-            loadSymbolTable(i, section_headers[i].sh_link, is, dynamic_symbols);
+            loadSymbolTable(i, section_headers[i].sh_link, is);
             break;
 
         }
@@ -98,12 +98,9 @@ const char *ElfImage::loadSection(Elf64_Half index, istream &is) {
 void ElfImage::loadSymbolTable(
     Elf64_Half symbol_index,
     Elf64_Half string_index,
-    istream &is,
-    ElfSymbolTable &symbols
+    istream &is
 ) {
-    if(symbols.symbols) {
-        throw MultipleSymbolTables();
-    }
+    ElfSymbolTable symbols;
 
     if(section_headers[symbol_index].sh_size % sizeof(Elf64_Sym) != 0) {
         throw UnsupportedSymbolConfiguration();
@@ -112,6 +109,8 @@ void ElfImage::loadSymbolTable(
     symbols.num_symbols = section_headers[symbol_index].sh_size / sizeof(Elf64_Sym);
     symbols.symbols = (Elf64_Sym*)loadSection(symbol_index, is);
     symbols.strings = loadSection(string_index, is);
+
+    symbol_tables[symbol_index] = symbols;
 }
 
 void ElfImage::allocateAddressSpace() {
@@ -196,43 +195,29 @@ void ElfImage::dump(ostream &os) {
     }
 
     // Dump symbols
-    for(int i = 0; i < symbols.num_symbols; i++) {
-        auto section_index_for_name = _inRange(
-            symbols.symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
-        ) ? 0 : symbols.symbols[i].st_shndx;
+    for(auto iterator : symbol_tables) {
+        ElfSymbolTable symbols = iterator.second;
         os << endl;
-        os << "Symbol Name Offset: " << symbols.symbols[i].st_name << endl;
-        os << "Symbol Name: " << &symbols.strings[symbols.symbols[i].st_name] << endl;
-        os << "Symbol Bind: " << ELF64_ST_BIND(symbols.symbols[i].st_info)
-            << " (" << symbolBindToString(ELF64_ST_BIND(symbols.symbols[i].st_info)) << ')' << endl;
-        os << "Symbol Type: " << ELF64_ST_TYPE(symbols.symbols[i].st_info)
-            << " (" << symbolTypeToString(ELF64_ST_TYPE(symbols.symbols[i].st_info)) << ')' << endl;
-        // Strangely, elf_common.h contains 7 constants for this despite it being 1 bit
-        os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(symbols.symbols[i].st_other) << endl;
-        os << "Symbol Section Index: " << symbols.symbols[i].st_shndx << endl;
-        os << "Symbol Section Name: "
-            << &section_strings[section_headers[section_index_for_name].sh_name] << endl;
-        os << "Symbol Value: " << (void*)symbols.symbols[i].st_value << endl;
-        os << "Symbol Size: " << symbols.symbols[i].st_size << endl;
-    }
+        os << "Symbol Table: " << &section_strings[section_headers[iterator.first].sh_name] << endl;
 
-    // Dump dynamic symbols
-    for(int i = 0; i < dynamic_symbols.num_symbols; i++) {
-        auto section_index_for_name = _inRange(
-            dynamic_symbols.symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
-        ) ? 0 : dynamic_symbols.symbols[i].st_shndx;
-        os << endl;
-        os << "Symbol Name Offset: " << dynamic_symbols.symbols[i].st_name << endl;
-        os << "Symbol Name: " << &dynamic_symbols.strings[dynamic_symbols.symbols[i].st_name] << endl;
-        os << "Symbol Bind: " << ELF64_ST_BIND(dynamic_symbols.symbols[i].st_info)
-            << " (" << symbolBindToString(ELF64_ST_BIND(dynamic_symbols.symbols[i].st_info)) << ')' << endl;
-        os << "Symbol Type: " << ELF64_ST_TYPE(dynamic_symbols.symbols[i].st_info)
-            << " (" << symbolTypeToString(ELF64_ST_TYPE(dynamic_symbols.symbols[i].st_info)) << ')' << endl;
-        os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(dynamic_symbols.symbols[i].st_other) << endl;
-        os << "Symbol Section Index: " << dynamic_symbols.symbols[i].st_shndx << endl;
-        os << "Symbol Section Name: "
-            << &section_strings[section_headers[section_index_for_name].sh_name] << endl;
-        os << "Symbol Value: " << (void*)dynamic_symbols.symbols[i].st_value << endl;
-        os << "Symbol Size: " << dynamic_symbols.symbols[i].st_size << endl;
+        for(int i = 0; i < symbols.num_symbols; i++) {
+            auto section_index_for_name = _inRange(
+                symbols.symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
+            ) ? 0 : symbols.symbols[i].st_shndx;
+            os << endl;
+            os << "Symbol Name Offset: " << symbols.symbols[i].st_name << endl;
+            os << "Symbol Name: " << &symbols.strings[symbols.symbols[i].st_name] << endl;
+            os << "Symbol Bind: " << ELF64_ST_BIND(symbols.symbols[i].st_info)
+                << " (" << symbolBindToString(ELF64_ST_BIND(symbols.symbols[i].st_info)) << ')' << endl;
+            os << "Symbol Type: " << ELF64_ST_TYPE(symbols.symbols[i].st_info)
+                << " (" << symbolTypeToString(ELF64_ST_TYPE(symbols.symbols[i].st_info)) << ')' << endl;
+            // Strangely, elf_common.h contains 7 constants for this despite it being 1 bit
+            os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(symbols.symbols[i].st_other) << endl;
+            os << "Symbol Section Index: " << symbols.symbols[i].st_shndx << endl;
+            os << "Symbol Section Name: "
+                << &section_strings[section_headers[section_index_for_name].sh_name] << endl;
+            os << "Symbol Value: " << (void*)symbols.symbols[i].st_value << endl;
+            os << "Symbol Size: " << symbols.symbols[i].st_size << endl;
+        }
     }
 }

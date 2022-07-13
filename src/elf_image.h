@@ -27,8 +27,7 @@ private:
     void loadSymbolTable(
         Elf64_Half symbol_index,
         Elf64_Half string_index,
-        std::istream &is,
-        ElfSymbolTable &symbols
+        std::istream &is
     );
 
     void allocateAddressSpace();
@@ -42,8 +41,7 @@ private:
 
     std::map<Elf64_Half, std::unique_ptr<char[]>> aux_sections;
 
-    ElfSymbolTable symbols;
-    ElfSymbolTable dynamic_symbols;
+    std::map<Elf64_Half, ElfSymbolTable> symbol_tables;
 };
 
 #endif//__INC_ELF_IMAGE_H_
