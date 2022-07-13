@@ -7,12 +7,12 @@
 #include <map>
 #include "elf64.h"
 
-class ElfSymbolCollection {
+class ElfSymbolTable {
 public:
-    ElfSymbolCollection() : num_symbols(0), symbols(nullptr), strings(nullptr) { }
+    ElfSymbolTable() : num_symbols(0), symbols(nullptr), strings(nullptr) { }
 
     size_t num_symbols;
-    Elf64_Sym *symbols;
+    const Elf64_Sym *symbols;
     const char *strings;
 };
 
@@ -28,7 +28,7 @@ private:
         Elf64_Half symbol_index,
         Elf64_Half string_index,
         std::istream &is,
-        ElfSymbolCollection &symbols
+        ElfSymbolTable &symbols
     );
 
     void allocateAddressSpace();
@@ -42,8 +42,8 @@ private:
 
     std::map<Elf64_Half, std::unique_ptr<char[]>> aux_sections;
 
-    ElfSymbolCollection symbols;
-    ElfSymbolCollection dynamic_symbols;
+    ElfSymbolTable symbols;
+    ElfSymbolTable dynamic_symbols;
 };
 
 #endif//__INC_ELF_IMAGE_H_

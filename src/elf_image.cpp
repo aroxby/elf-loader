@@ -99,7 +99,7 @@ void ElfImage::loadSymbolTable(
     Elf64_Half symbol_index,
     Elf64_Half string_index,
     istream &is,
-    ElfSymbolCollection &symbols
+    ElfSymbolTable &symbols
 ) {
     if(symbols.symbols) {
         throw MultipleSymbolTables();
