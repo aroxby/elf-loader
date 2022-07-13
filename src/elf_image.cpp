@@ -66,13 +66,8 @@ ElfImage::ElfImage(istream &is) {
     for(int i = 0; i < elf_header.e_shnum; i++) {
         switch(section_headers[i].sh_type) {
         case SHT_SYMTAB:
-            loadSymbolTable(i, section_headers[i].sh_link, is);
-            break;
-
         case SHT_DYNSYM:
-            loadSymbolTable(i, section_headers[i].sh_link, is);
-            break;
-
+            loadSymbolTable(i, is);
         }
     }
 }
@@ -95,22 +90,18 @@ const char *ElfImage::loadSection(Elf64_Half index, istream &is) {
     return ptr;
 }
 
-void ElfImage::loadSymbolTable(
-    Elf64_Half symbol_index,
-    Elf64_Half string_index,
-    istream &is
-) {
-    ElfSymbolTable symbols;
-
+void ElfImage::loadSymbolTable(Elf64_Half symbol_index, istream &is) {
     if(section_headers[symbol_index].sh_size % sizeof(Elf64_Sym) != 0) {
         throw UnsupportedSymbolConfiguration();
     }
 
-    symbols.num_symbols = section_headers[symbol_index].sh_size / sizeof(Elf64_Sym);
-    symbols.symbols = (Elf64_Sym*)loadSection(symbol_index, is);
-    symbols.strings = loadSection(string_index, is);
+    size_t num_symbols = section_headers[symbol_index].sh_size / sizeof(Elf64_Sym);
+    Elf64_Sym *symbols = (Elf64_Sym*)loadSection(symbol_index, is);
+    const char *strings = loadSection(section_headers[symbol_index].sh_link, is);
 
-    symbol_tables[symbol_index] = symbols;
+    symbol_tables.emplace(
+        symbol_index, ElfSymbolTable(num_symbols, symbols, strings)
+    );
 }
 
 void ElfImage::allocateAddressSpace() {
@@ -221,3 +212,6 @@ void ElfImage::dump(ostream &os) {
         }
     }
 }
+
+ElfSymbolTable::ElfSymbolTable(size_t num_symbols, const Elf64_Sym *symbols, const char *strings) :
+    num_symbols(num_symbols), symbols(symbols), strings(strings) { }

@@ -9,7 +9,7 @@
 
 class ElfSymbolTable {
 public:
-    ElfSymbolTable() : num_symbols(0), symbols(nullptr), strings(nullptr) { }
+    ElfSymbolTable(size_t num_symbols, const Elf64_Sym *symbols, const char *strings);
 
     size_t num_symbols;
     const Elf64_Sym *symbols;
@@ -24,11 +24,7 @@ public:
 
 private:
     const char *loadSection(Elf64_Half index, std::istream &is);
-    void loadSymbolTable(
-        Elf64_Half symbol_index,
-        Elf64_Half string_index,
-        std::istream &is
-    );
+    void loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
 
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
