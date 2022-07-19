@@ -70,6 +70,10 @@ ElfImage::ElfImage(istream &is) {
             loadSymbolTable(i, is);
             break;
 
+        case SHT_RELA:
+            processRelocations(i, is);
+            break;
+
         case SHT_NOTE:  // There's very little information about this available
         case SHT_GNU_HASH:  // This isn't needed to run but it boosts performance
         case SHT_STRTAB:  // These are loaded by other sections
@@ -77,6 +81,46 @@ ElfImage::ElfImage(istream &is) {
         case SHT_GNU_verneed:  // I can't tell if this is required for dynamic linking
             break;
         }
+    }
+}
+
+void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
+    int num_relocations = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
+    Elf64_Rela *relocations = (Elf64_Rela*)loadSection(section_index, is);
+
+    // TODO: Sure would be nice to combine these statements (add return to loadSymbolTable)
+    loadSymbolTable(section_headers[section_index].sh_link, is);
+    ElfSymbolTable &table = symbol_tables.find(section_headers[section_index].sh_link)->second;
+
+    for(int i = 0; i < num_relocations; i++) {
+        Elf64_Xword symbol_index = ELF64_R_SYM(relocations[i].r_info);
+        Elf64_Xword relocation_type = ELF64_R_TYPE_ID(relocations[i].r_info);
+        // ELF64_R_TYPE_DATA(relocations[i].r_info);  // Seems only used on SPARC
+
+        // FIXME: Dynamic symbols (eg: R_X86_64_JMP_SLOT) are not loaded
+        // Missed in a previous section or included in upcoming section?
+        const Elf64_Sym &symbol = table.symbols[symbol_index];
+        const char *symbol_name = &table.strings[symbol.st_name];
+
+        /*
+        Elf64_Xword A = relocations[i].r_addend;
+        Elf64_Xword B = (Elf64_Xword)&image_base[0];
+        Elf64_Xword S = symbol.st_value;
+        */
+        /*
+        Elf64_Xword P = relocations[i].r_offset;
+        Elf64_Xword G = 0;  // GOT offset?
+        Elf64_Xword GOT = 0;  // GOT address?
+        Elf64_Xword L = 0;  // PLT address?
+        Elf64_Xword Z = symbol.st_size;
+        */
+
+        // I'm not ready to process this section yet so we'll just dump it for now
+
+        // TODO: Fix name collision
+        this->relocations.emplace_back(
+            relocations[i].r_offset, relocation_type, relocations[i].r_addend, symbol.st_value, symbol_name
+        );
     }
 }
 
@@ -102,6 +146,8 @@ void ElfImage::loadSymbolTable(Elf64_Half symbol_index, istream &is) {
     if(section_headers[symbol_index].sh_size % sizeof(Elf64_Sym) != 0) {
         throw UnsupportedSymbolConfiguration();
     }
+
+    // TODO: Check the symbol table is not already loaded
 
     size_t num_symbols = section_headers[symbol_index].sh_size / sizeof(Elf64_Sym);
     Elf64_Sym *symbols = (Elf64_Sym*)loadSection(symbol_index, is);
@@ -219,7 +265,23 @@ void ElfImage::dump(ostream &os) {
             os << "Symbol Size: " << symbols.symbols[i].st_size << endl;
         }
     }
+
+    // Dump relocations
+    for(auto relocation : relocations) {
+        os << endl;
+        os << "Relocation Offset: " << (void*)relocation.offset << endl;
+        // TODO: Get Relocation Type Name
+        os << "Relocation Type: " << relocation.type << endl;
+        os << "Relocation Addend: " << (void*)relocation.addend << endl;
+        os << "Relocation Symbol Value: " << (void*)relocation.symbol_value << endl;
+        os << "Relocation Symbol Name: " << relocation.symbol_name << endl;
+    }
 }
 
 ElfSymbolTable::ElfSymbolTable(size_t num_symbols, const Elf64_Sym *symbols, const char *strings) :
     num_symbols(num_symbols), symbols(symbols), strings(strings) { }
+
+
+ElfRelocation::ElfRelocation(
+    Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name
+) : offset(offset), type(type), addend(addend), symbol_value(symbol_value), symbol_name(symbol_name) { }

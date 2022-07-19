@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <vector>
 #include "elf64.h"
 
 class ElfSymbolTable {
@@ -16,6 +17,19 @@ public:
     const char *strings;
 };
 
+class ElfRelocation {
+public:
+    ElfRelocation(
+        Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name
+    );
+
+    Elf64_Addr offset;
+    Elf64_Xword type;
+    Elf64_Sxword addend;
+    Elf64_Addr symbol_value;
+    const char *symbol_name;
+};
+
 class ElfImage {
 public:
     ElfImage(std::istream &is);
@@ -23,6 +37,7 @@ public:
     void dump(std::ostream &os);
 
 private:
+    void processRelocations(Elf64_Half section_index, std::istream &is);
     const char *loadSection(Elf64_Half index, std::istream &is);
     void loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
 
@@ -38,6 +53,9 @@ private:
     std::map<Elf64_Half, std::unique_ptr<char[]>> aux_sections;
 
     std::map<Elf64_Half, ElfSymbolTable> symbol_tables;
+
+    // This is mainly for debugging and might go away
+    std::vector<ElfRelocation> relocations;
 };
 
 #endif//__INC_ELF_IMAGE_H_
