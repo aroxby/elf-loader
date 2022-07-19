@@ -12,7 +12,7 @@ class ElfSymbolTable {
 public:
     ElfSymbolTable(size_t num_symbols, const Elf64_Sym *symbols, const char *strings);
 
-    size_t num_symbols;
+    const size_t num_symbols;
     const Elf64_Sym *symbols;
     const char *strings;
 };
@@ -23,10 +23,10 @@ public:
         Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name
     );
 
-    Elf64_Addr offset;
-    Elf64_Xword type;
-    Elf64_Sxword addend;
-    Elf64_Addr symbol_value;
+    const Elf64_Addr offset;
+    const Elf64_Xword type;
+    const Elf64_Sxword addend;
+    const Elf64_Addr symbol_value;
     const char *symbol_name;
 };
 
@@ -34,7 +34,7 @@ class ElfImage {
 public:
     ElfImage(std::istream &is);
 
-    void dump(std::ostream &os);
+    void dump(std::ostream &os) const;
 
 private:
     void processRelocations(Elf64_Half section_index, std::istream &is);
@@ -45,8 +45,8 @@ private:
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
 
     Elf64_Ehdr elf_header;
-    std::unique_ptr<Elf64_Shdr[]> section_headers;
-    std::unique_ptr<Elf64_Phdr[]> program_headers;
+    std::unique_ptr<const Elf64_Shdr[]> section_headers;
+    std::unique_ptr<const Elf64_Phdr[]> program_headers;
     const char *section_strings;
     std::unique_ptr<char[]> image_base;
 

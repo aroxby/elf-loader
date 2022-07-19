@@ -37,14 +37,14 @@ ElfImage::ElfImage(istream &is) {
 
     // Load section headers
     is.seekg(elf_header.e_shoff);
-    section_headers = unique_ptr<Elf64_Shdr[]>(new Elf64_Shdr[elf_header.e_shnum]);
+    section_headers = unique_ptr<const Elf64_Shdr[]>(new Elf64_Shdr[elf_header.e_shnum]);
     for(int i = 0; i < elf_header.e_shnum; i++) {
         is.read((char*)&section_headers[i], sizeof(Elf64_Shdr));
     }
 
     // Load program headers
     is.seekg(elf_header.e_phoff);
-    program_headers = unique_ptr<Elf64_Phdr[]>(new Elf64_Phdr[elf_header.e_phnum]);
+    program_headers = unique_ptr<const Elf64_Phdr[]>(new Elf64_Phdr[elf_header.e_phnum]);
     for(int i = 0; i < elf_header.e_phnum; i++) {
         is.read((char*)&program_headers[i], sizeof(Elf64_Phdr));
     }
@@ -184,7 +184,7 @@ void ElfImage::loadSegment(const Elf64_Phdr &header, istream &is) {
     is.read(ptr, header.p_memsz);
 }
 
-void ElfImage::dump(ostream &os) {
+void ElfImage::dump(ostream &os) const {
     // Dump main header
     os << "Type: " << elf_header.e_type
         << " (" << elfTypeToString(elf_header.e_type) << ')' << endl;
@@ -242,7 +242,7 @@ void ElfImage::dump(ostream &os) {
 
     // Dump symbols
     for(auto iterator : symbol_tables) {
-        ElfSymbolTable symbols = iterator.second;
+        const ElfSymbolTable &symbols = iterator.second;
         os << endl;
         os << "Symbol Table: " << &section_strings[section_headers[iterator.first].sh_name] << endl;
 
