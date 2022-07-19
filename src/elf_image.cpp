@@ -88,9 +88,7 @@ void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
     int num_relocations = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
     Elf64_Rela *relocations = (Elf64_Rela*)loadSection(section_index, is);
 
-    // TODO: Sure would be nice to combine these statements (add return to loadSymbolTable)
-    loadSymbolTable(section_headers[section_index].sh_link, is);
-    ElfSymbolTable &table = symbol_tables.find(section_headers[section_index].sh_link)->second;
+    const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
 
     for(int i = 0; i < num_relocations; i++) {
         Elf64_Xword symbol_index = ELF64_R_SYM(relocations[i].r_info);
@@ -142,20 +140,23 @@ const char *ElfImage::loadSection(Elf64_Half index, istream &is) {
     return ptr;
 }
 
-void ElfImage::loadSymbolTable(Elf64_Half symbol_index, istream &is) {
-    if(section_headers[symbol_index].sh_size % sizeof(Elf64_Sym) != 0) {
+const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istream &is) {
+    if(section_headers[section_index].sh_size % sizeof(Elf64_Sym) != 0) {
         throw UnsupportedSymbolConfiguration();
     }
 
-    // TODO: Check the symbol table is not already loaded
+    auto iterator = symbol_tables.find(section_index);
+    if(iterator == symbol_tables.end()) {
+        size_t num_symbols = section_headers[section_index].sh_size / sizeof(Elf64_Sym);
+        const Elf64_Sym *symbols = (Elf64_Sym*)loadSection(section_index, is);
+        const char *strings = loadSection(section_headers[section_index].sh_link, is);
 
-    size_t num_symbols = section_headers[symbol_index].sh_size / sizeof(Elf64_Sym);
-    Elf64_Sym *symbols = (Elf64_Sym*)loadSection(symbol_index, is);
-    const char *strings = loadSection(section_headers[symbol_index].sh_link, is);
-
-    symbol_tables.emplace(
-        symbol_index, ElfSymbolTable(num_symbols, symbols, strings)
-    );
+        auto emplace_result = symbol_tables.emplace(
+            section_index, ElfSymbolTable(num_symbols, symbols, strings)
+        );
+        iterator = emplace_result.first;
+    }
+    return iterator->second;
 }
 
 void ElfImage::allocateAddressSpace() {

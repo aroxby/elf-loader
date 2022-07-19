@@ -39,7 +39,7 @@ public:
 private:
     void processRelocations(Elf64_Half section_index, std::istream &is);
     const char *loadSection(Elf64_Half index, std::istream &is);
-    void loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
+    const ElfSymbolTable &loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
 
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
