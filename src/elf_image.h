@@ -52,7 +52,7 @@ private:
 
     std::map<Elf64_Half, std::unique_ptr<char[]>> aux_sections;
 
-    std::map<Elf64_Half, ElfSymbolTable> symbol_tables;
+    std::map<Elf64_Half, const ElfSymbolTable> symbol_tables;
 
     // This is mainly for debugging and might go away
     std::vector<ElfRelocation> relocations;
