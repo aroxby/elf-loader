@@ -271,8 +271,8 @@ void ElfImage::dump(ostream &os) const {
     for(auto relocation : relocations) {
         os << endl;
         os << "Relocation Offset: " << (void*)relocation.offset << endl;
-        // TODO: Get Relocation Type Name
-        os << "Relocation Type: " << relocation.type << endl;
+        os << "Relocation Type: " << relocation.type
+            << " (" << relocationTypeToString(relocation.type) << ')' << endl;
         os << "Relocation Addend: " << (void*)relocation.addend << endl;
         os << "Relocation Symbol Value: " << (void*)relocation.symbol_value << endl;
         os << "Relocation Symbol Name: " << relocation.symbol_name << endl;

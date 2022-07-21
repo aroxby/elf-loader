@@ -166,6 +166,37 @@ const std::string &symbolTypeToString(int type) {
     return getNameOrUnknown(type_types, type);
 }
 
+const std::string &relocationTypeToString(int type) {
+    const static Index type_types = {
+        {R_X86_64_NONE, "R_X86_64_NONE"},
+        {R_X86_64_64, "R_X86_64_64"},
+        {R_X86_64_PC32, "R_X86_64_PC32"},
+        {R_X86_64_GOT32, "R_X86_64_GOT32"},
+        {R_X86_64_PLT32, "R_X86_64_PLT32"},
+        {R_X86_64_COPY, "R_X86_64_COPY"},
+        {R_X86_64_GLOB_DAT, "R_X86_64_GLOB_DAT"},
+        {R_X86_64_JMP_SLOT, "R_X86_64_JMP_SLOT"},
+        {R_X86_64_RELATIVE, "R_X86_64_RELATIVE"},
+        {R_X86_64_GOTPCREL, "R_X86_64_GOTPCREL"},
+        {R_X86_64_32, "R_X86_64_32"},
+        {R_X86_64_32S, "R_X86_64_32S"},
+        {R_X86_64_16, "R_X86_64_16"},
+        {R_X86_64_PC16, "R_X86_64_PC16"},
+        {R_X86_64_8, "R_X86_64_8"},
+        {R_X86_64_PC8, "R_X86_64_PC8"},
+        {R_X86_64_DTPMOD64, "R_X86_64_DTPMOD64"},
+        {R_X86_64_DTPOFF64, "R_X86_64_DTPOFF64"},
+        {R_X86_64_TPOFF64, "R_X86_64_TPOFF64"},
+        {R_X86_64_TLSGD, "R_X86_64_TLSGD"},
+        {R_X86_64_TLSLD, "R_X86_64_TLSLD"},
+        {R_X86_64_DTPOFF32, "R_X86_64_DTPOFF32"},
+        {R_X86_64_GOTTPOFF, "R_X86_64_GOTTPOFF"},
+        {R_X86_64_TPOFF32, "R_X86_64_TPOFF32"},
+        {R_X86_64_IRELATIVE, "R_X86_64_IRELATIVE"},
+    };
+    return getNameOrUnknown(type_types, type);
+}
+
 std::string flagsToString(const Index &map, int flags) {
     const static std::string sep(" | ");
     const static std::string extra("?");
