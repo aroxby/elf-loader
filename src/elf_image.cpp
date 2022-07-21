@@ -82,11 +82,17 @@ ElfImage::ElfImage(istream &is) {
             fini_array = loadFunctionArray(i, is);
             break;
 
+        case SHT_DYNAMIC:
+            break;
+
         case SHT_NOTE:  // There's very little information about this available
         case SHT_GNU_HASH:  // This isn't needed to run but it boosts performance
         case SHT_STRTAB:  // These are loaded by other sections
         case SHT_GNU_versym:  // I can't tell if this is required for dynamic linking
         case SHT_GNU_verneed:  // I can't tell if this is required for dynamic linking
+        case SHT_NOBITS:  // These sections contain no data
+        case SHT_PROGBITS:  // Most of these aren't processed but there may be exceptions
+            // TODO: Figure out if we need to collect .init, .fini, or anything else
             break;
         }
     }
