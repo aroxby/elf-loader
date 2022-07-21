@@ -85,12 +85,12 @@ ElfImage::ElfImage(istream &is) {
 }
 
 void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
-    int num_relocations = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
+    size_t num_relocations = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
     Elf64_Rela *relocations = (Elf64_Rela*)loadSection(section_index, is);
 
     const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
 
-    for(int i = 0; i < num_relocations; i++) {
+    for(size_t i = 0; i < num_relocations; i++) {
         Elf64_Xword symbol_index = ELF64_R_SYM(relocations[i].r_info);
         Elf64_Xword relocation_type = ELF64_R_TYPE_ID(relocations[i].r_info);
         // ELF64_R_TYPE_DATA(relocations[i].r_info);  // Seems only used on SPARC
