@@ -8,6 +8,8 @@
 #include <vector>
 #include "elf64.h"
 
+typedef void (*ElfFunction)();
+
 class ElfSymbolTable {
 public:
     ElfSymbolTable(size_t num_symbols, const Elf64_Sym *symbols, const char *strings);
@@ -43,6 +45,7 @@ private:
 
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
+    std::vector<ElfFunction> loadFunctionArray(Elf64_Half section_index, std::istream &is);
 
     Elf64_Ehdr elf_header;
     std::unique_ptr<const Elf64_Shdr[]> section_headers;
@@ -56,6 +59,9 @@ private:
 
     // This is mainly for debugging and might go away
     std::vector<ElfRelocation> relocations;
+
+    std::vector<ElfFunction> init_array;
+    std::vector<ElfFunction> fini_array;
 };
 
 #endif//__INC_ELF_IMAGE_H_

@@ -74,6 +74,14 @@ ElfImage::ElfImage(istream &is) {
             processRelocations(i, is);
             break;
 
+        case SHT_INIT_ARRAY:
+            init_array = loadFunctionArray(i, is);
+            break;
+
+        case SHT_FINI_ARRAY:
+            fini_array = loadFunctionArray(i, is);
+            break;
+
         case SHT_NOTE:  // There's very little information about this available
         case SHT_GNU_HASH:  // This isn't needed to run but it boosts performance
         case SHT_STRTAB:  // These are loaded by other sections
@@ -157,6 +165,18 @@ const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istrea
         iterator = emplace_result.first;
     }
     return iterator->second;
+}
+
+vector<ElfFunction> ElfImage::loadFunctionArray(Elf64_Half section_index, istream &is) {
+    size_t num_functions =  section_headers[section_index].sh_size / sizeof(ElfFunction);
+    ElfFunction *ptrs = (ElfFunction*)loadSection(section_index, is);
+    vector<ElfFunction> functions;
+    functions.reserve(num_functions);
+    for(size_t i = 0; i<num_functions; i++) {
+        functions.push_back(ptrs[i]);
+    }
+
+    return functions;
 }
 
 void ElfImage::allocateAddressSpace() {
@@ -276,6 +296,19 @@ void ElfImage::dump(ostream &os) const {
         os << "Relocation Addend: " << (void*)relocation.addend << endl;
         os << "Relocation Symbol Value: " << (void*)relocation.symbol_value << endl;
         os << "Relocation Symbol Name: " << relocation.symbol_name << endl;
+    }
+
+    // Dump init array
+    for(auto function : init_array) {
+        os << endl;
+        // Strangely, just printing function addresses was showing the wrong value
+        os << "Init: " << (void*)function << endl;
+    }
+
+    // Dump fini array
+    for(auto function : fini_array) {
+        os << endl;
+        os << "Fini: " << (void*)function << endl;
     }
 }
 
