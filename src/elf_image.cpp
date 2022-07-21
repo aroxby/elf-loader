@@ -257,7 +257,7 @@ void ElfImage::dump(ostream &os) const {
                 << " (" << symbolBindToString(ELF64_ST_BIND(symbols.symbols[i].st_info)) << ')' << endl;
             os << "Symbol Type: " << ELF64_ST_TYPE(symbols.symbols[i].st_info)
                 << " (" << symbolTypeToString(ELF64_ST_TYPE(symbols.symbols[i].st_info)) << ')' << endl;
-            // Strangely, elf_common.h contains 7 constants for this despite it being 1 bit
+            // Strangely, elf_common.h contains 7 constants for this despite it being 2 bits
             os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(symbols.symbols[i].st_other) << endl;
             os << "Symbol Section Index: " << symbols.symbols[i].st_shndx << endl;
             os << "Symbol Section Name: "
