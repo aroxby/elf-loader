@@ -75,14 +75,15 @@ ElfImage::ElfImage(istream &is) {
             break;
 
         case SHT_INIT_ARRAY:
-            init_array = loadFunctionArray(i, is);
+            init_array = loadArray<ElfFunction>(i, is);
             break;
 
         case SHT_FINI_ARRAY:
-            fini_array = loadFunctionArray(i, is);
+            fini_array = loadArray<ElfFunction>(i, is);
             break;
 
         case SHT_DYNAMIC:
+            dynamic = loadArray<Elf64_Dyn>(i, is);
             break;
 
         case SHT_NOTE:  // There's very little information about this available
@@ -173,16 +174,16 @@ const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istrea
     return iterator->second;
 }
 
-vector<ElfFunction> ElfImage::loadFunctionArray(Elf64_Half section_index, istream &is) {
-    size_t num_functions =  section_headers[section_index].sh_size / sizeof(ElfFunction);
-    ElfFunction *ptrs = (ElfFunction*)loadSection(section_index, is);
-    vector<ElfFunction> functions;
-    functions.reserve(num_functions);
-    for(size_t i = 0; i<num_functions; i++) {
-        functions.push_back(ptrs[i]);
+template <typename DataType>
+vector<DataType> ElfImage::loadArray(Elf64_Half section_index, istream &is) {
+    size_t num_entries =  section_headers[section_index].sh_size / sizeof(DataType);
+    DataType *ptrs = (DataType*)loadSection(section_index, is);
+    vector<DataType> entries;
+    entries.reserve(num_entries);
+    for(size_t i = 0; i<num_entries; i++) {
+        entries.push_back(ptrs[i]);
     }
-
-    return functions;
+    return entries;
 }
 
 void ElfImage::allocateAddressSpace() {
@@ -315,6 +316,17 @@ void ElfImage::dump(ostream &os) const {
     for(auto function : fini_array) {
         os << endl;
         os << "Fini: " << (void*)function << endl;
+    }
+
+    // Dump dynamic data
+    for(auto entry : dynamic) {
+        os << endl;
+        if(entry.d_tag < DT_LOOS) {
+            os << "Dynamic Entry Type: " << entry.d_tag << endl;
+        } else {
+            os << "Dynamic Entry Type: " << (void*)entry.d_tag << endl;
+        }
+        os << "Dynamic Entry Address: " << (void*)entry.d_un.d_ptr << endl;
     }
 }
 

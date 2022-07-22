@@ -45,7 +45,9 @@ private:
 
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
-    std::vector<ElfFunction> loadFunctionArray(Elf64_Half section_index, std::istream &is);
+
+    template <typename DataType>
+    std::vector<DataType> loadArray(Elf64_Half section_index, std::istream &is);
 
     Elf64_Ehdr elf_header;
     std::unique_ptr<const Elf64_Shdr[]> section_headers;
@@ -60,8 +62,10 @@ private:
     // This is mainly for debugging and might go away
     std::vector<ElfRelocation> relocations;
 
+    // TODO: Use an array class that keeps the unmanaged pointer and element count
     std::vector<ElfFunction> init_array;
     std::vector<ElfFunction> fini_array;
+    std::vector<Elf64_Dyn> dynamic;
 };
 
 #endif//__INC_ELF_IMAGE_H_
