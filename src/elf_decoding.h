@@ -11,6 +11,7 @@ const std::string &elfTypeToString(int type);
 const std::string &sectionTypeToString(int type);
 const std::string &segmentTypeToString(int type);
 const std::string &relocationTypeToString(int type);
+const std::string &dynamicEntryTypeToString(int type);
 
 const std::string &symbolBindToString(int type);
 const std::string &symbolTypeToString(int type);

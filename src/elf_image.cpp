@@ -321,10 +321,13 @@ void ElfImage::dump(ostream &os) const {
     // Dump dynamic data
     for(auto entry : dynamic) {
         os << endl;
+        const string &entryTypeName = dynamicEntryTypeToString(entry.d_tag);
         if(entry.d_tag < DT_LOOS) {
-            os << "Dynamic Entry Type: " << entry.d_tag << endl;
+            os << "Dynamic Entry Type: " << entry.d_tag
+                << " (" << entryTypeName << ')' << endl;
         } else {
-            os << "Dynamic Entry Type: " << (void*)entry.d_tag << endl;
+            os << "Dynamic Entry Type: " << (void*)entry.d_tag
+                << " (" << entryTypeName << ')' << endl;
         }
         os << "Dynamic Entry Address: " << (void*)entry.d_un.d_ptr << endl;
     }
