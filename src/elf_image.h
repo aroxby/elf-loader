@@ -59,7 +59,6 @@ private:
 
     std::map<Elf64_Half, const ElfSymbolTable> symbol_tables;
 
-    // This is mainly for debugging and might go away
     std::vector<ElfRelocation> relocations;
 
     // TODO: Use an array class that keeps the unmanaged pointer and element count

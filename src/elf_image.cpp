@@ -100,15 +100,15 @@ ElfImage::ElfImage(istream &is) {
 }
 
 void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
-    size_t num_relocations = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
-    Elf64_Rela *relocations = (Elf64_Rela*)loadSection(section_index, is);
+    size_t num_entries = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
+    Elf64_Rela *entries = (Elf64_Rela*)loadSection(section_index, is);
 
     const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
 
-    for(size_t i = 0; i < num_relocations; i++) {
-        Elf64_Xword symbol_index = ELF64_R_SYM(relocations[i].r_info);
-        Elf64_Xword relocation_type = ELF64_R_TYPE_ID(relocations[i].r_info);
-        // ELF64_R_TYPE_DATA(relocations[i].r_info);  // Seems only used on SPARC
+    for(size_t i = 0; i < num_entries; i++) {
+        Elf64_Xword symbol_index = ELF64_R_SYM(entries[i].r_info);
+        Elf64_Xword relocation_type = ELF64_R_TYPE_ID(entries[i].r_info);
+        // ELF64_R_TYPE_DATA(entries[i].r_info);  // Seems only used on SPARC
 
         // FIXME: Dynamic symbols (eg: R_X86_64_JMP_SLOT) are not loaded
         // Missed in a previous section or included in upcoming section?
@@ -116,12 +116,12 @@ void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
         const char *symbol_name = &table.strings[symbol.st_name];
 
         /*
-        Elf64_Xword A = relocations[i].r_addend;
+        Elf64_Xword A = entries[i].r_addend;
         Elf64_Xword B = (Elf64_Xword)&image_base[0];
         Elf64_Xword S = symbol.st_value;
         */
         /*
-        Elf64_Xword P = relocations[i].r_offset;
+        Elf64_Xword P = entries[i].r_offset;
         Elf64_Xword G = 0;  // GOT offset?
         Elf64_Xword GOT = 0;  // GOT address?
         Elf64_Xword L = 0;  // PLT address?
@@ -129,10 +129,8 @@ void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
         */
 
         // I'm not ready to process this section yet so we'll just dump it for now
-
-        // TODO: Fix name collision
-        this->relocations.emplace_back(
-            relocations[i].r_offset, relocation_type, relocations[i].r_addend, symbol.st_value, symbol_name
+        relocations.emplace_back(
+            entries[i].r_offset, relocation_type, entries[i].r_addend, symbol.st_value, symbol_name
         );
     }
 }
