@@ -100,13 +100,10 @@ ElfImage::ElfImage(istream &is) {
 }
 
 void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
-    // FIXME: Use DynamicArray
-    size_t num_entries = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
-    Elf64_Rela *entries = (Elf64_Rela*)loadSection(section_index, is).get();
-
+    const DynamicArray<const Elf64_Rela> entries = loadArray<const Elf64_Rela>(section_index, is);
     const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
 
-    for(size_t i = 0; i < num_entries; i++) {
+    for(size_t i = 0; i < entries.getLength(); i++) {
         Elf64_Xword symbol_index = ELF64_R_SYM(entries[i].r_info);
         Elf64_Xword relocation_type = ELF64_R_TYPE_ID(entries[i].r_info);
         // ELF64_R_TYPE_DATA(entries[i].r_info);  // Seems only used on SPARC
@@ -159,15 +156,11 @@ const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istrea
 
     auto iterator = symbol_tables.find(section_index);
     if(iterator == symbol_tables.end()) {
-        size_t num_symbols = section_headers[section_index].sh_size / sizeof(Elf64_Sym);
-        // FIXME: Use DynamicArray
-        shared_ptr<const Elf64_Sym[]> symbols = reinterpret_pointer_cast<const Elf64_Sym[]>(
-            loadSection(section_index, is)
-        );
+        DynamicArray<const Elf64_Sym> symbols = loadArray<const Elf64_Sym>(section_index, is);
         shared_ptr<const char[]> strings = loadSection(section_headers[section_index].sh_link, is);
 
         auto emplace_result = symbol_tables.emplace(
-            section_index, ElfSymbolTable(num_symbols, symbols, strings)
+            section_index, ElfSymbolTable(symbols, strings)
         );
         iterator = emplace_result.first;
     }
@@ -270,7 +263,7 @@ void ElfImage::dump(ostream &os) const {
         os << endl;
         os << "Symbol Table: " << &section_strings[section_headers[iterator.first].sh_name] << endl;
 
-        for(int i = 0; i < symbols.num_symbols; i++) {
+        for(int i = 0; i < symbols.symbols.getLength(); i++) {
             auto section_index_for_name = _inRange(
                 symbols.symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
             ) ? 0 : symbols.symbols[i].st_shndx;
@@ -330,9 +323,8 @@ void ElfImage::dump(ostream &os) const {
     }
 }
 
-ElfSymbolTable::ElfSymbolTable(
-    size_t num_symbols, shared_ptr<const Elf64_Sym[]> symbols, shared_ptr<const char[]> strings
-) : num_symbols(num_symbols), symbols(symbols), strings(strings) { }
+ElfSymbolTable::ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, shared_ptr<const char[]> strings)
+    : symbols(symbols), strings(strings) { }
 
 ElfRelocation::ElfRelocation(
     Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name

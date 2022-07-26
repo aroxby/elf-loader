@@ -13,13 +13,9 @@ typedef void (*ElfFunction)();
 
 class ElfSymbolTable {
 public:
-    ElfSymbolTable(
-        size_t num_symbols, std::shared_ptr<const Elf64_Sym[]> symbols, std::shared_ptr<const char[]> strings
-    );
+    ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, std::shared_ptr<const char[]> strings);
 
-    // FIXME: Use DynamicArray
-    const size_t num_symbols;
-    std::shared_ptr<const Elf64_Sym[]> symbols;
+    DynamicArray<const Elf64_Sym> symbols;
     std::shared_ptr<const char[]> strings;
 };
 
@@ -33,7 +29,7 @@ public:
     const Elf64_Xword type;
     const Elf64_Sxword addend;
     const Elf64_Addr symbol_value;
-    const char *symbol_name;
+    std::shared_ptr<const char[]> symbol_name;
 };
 
 class ElfImage {
