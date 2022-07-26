@@ -12,7 +12,6 @@ public:
     DataType &operator*() const { return ptr[0]; }
     DataType &operator[](size_t index) const { return ptr[index]; }
 
-    std::shared_ptr<DataType[]> getPointer() const { return ptr; }
     size_t getLength() const { return length; }
 
     DataType *begin() const {
