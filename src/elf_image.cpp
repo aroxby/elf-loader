@@ -75,15 +75,15 @@ ElfImage::ElfImage(istream &is) {
             break;
 
         case SHT_INIT_ARRAY:
-            init_array = loadArray<ElfFunction>(i, is);
+            init_array = loadArray<const ElfFunction>(i, is);
             break;
 
         case SHT_FINI_ARRAY:
-            fini_array = loadArray<ElfFunction>(i, is);
+            fini_array = loadArray<const ElfFunction>(i, is);
             break;
 
         case SHT_DYNAMIC:
-            dynamic = loadArray<Elf64_Dyn>(i, is);
+            dynamic = loadArray<const Elf64_Dyn>(i, is);
             break;
 
         case SHT_NOTE:  // There's very little information about this available
@@ -100,8 +100,8 @@ ElfImage::ElfImage(istream &is) {
 }
 
 void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
+    // FIXME: Use DynamicArray
     size_t num_entries = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
-    // FIXME: loadArray
     Elf64_Rela *entries = (Elf64_Rela*)loadSection(section_index, is).get();
 
     const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
@@ -160,7 +160,7 @@ const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istrea
     auto iterator = symbol_tables.find(section_index);
     if(iterator == symbol_tables.end()) {
         size_t num_symbols = section_headers[section_index].sh_size / sizeof(Elf64_Sym);
-        // FIXME: loadArray
+        // FIXME: Use DynamicArray
         shared_ptr<const Elf64_Sym[]> symbols = reinterpret_pointer_cast<const Elf64_Sym[]>(
             loadSection(section_index, is)
         );
@@ -175,17 +175,12 @@ const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istrea
 }
 
 template <typename DataType>
-vector<DataType> ElfImage::loadArray(Elf64_Half section_index, istream &is) {
+DynamicArray<DataType> ElfImage::loadArray(Elf64_Half section_index, istream &is) {
     size_t num_entries =  section_headers[section_index].sh_size / sizeof(DataType);
     shared_ptr<const DataType[]> ptr = reinterpret_pointer_cast<const DataType[]>(
         loadSection(section_index, is)
     );
-    vector<DataType> entries;
-    entries.reserve(num_entries);
-    for(size_t i = 0; i<num_entries; i++) {
-        entries.push_back(ptr[i]);
-    }
-    return entries;
+    return DynamicArray(ptr, num_entries);
 }
 
 void ElfImage::allocateAddressSpace() {

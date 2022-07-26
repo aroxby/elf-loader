@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 #include "elf64.h"
+#include "dynamic_array.h"
 
 typedef void (*ElfFunction)();
 
@@ -16,6 +17,7 @@ public:
         size_t num_symbols, std::shared_ptr<const Elf64_Sym[]> symbols, std::shared_ptr<const char[]> strings
     );
 
+    // FIXME: Use DynamicArray
     const size_t num_symbols;
     std::shared_ptr<const Elf64_Sym[]> symbols;
     std::shared_ptr<const char[]> strings;
@@ -49,9 +51,8 @@ private:
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
 
-    // FIXME: Copies data
     template <typename DataType>
-    std::vector<DataType> loadArray(Elf64_Half section_index, std::istream &is);
+    DynamicArray<DataType> loadArray(Elf64_Half section_index, std::istream &is);
 
     Elf64_Ehdr elf_header;
     std::unique_ptr<const Elf64_Shdr[]> section_headers;
@@ -65,10 +66,10 @@ private:
 
     std::vector<ElfRelocation> relocations;
 
-    // TODO: Use an array class that keeps the unmanaged pointer and element count
-    std::vector<ElfFunction> init_array;
-    std::vector<ElfFunction> fini_array;
-    std::vector<Elf64_Dyn> dynamic;
+    DynamicArray<const ElfFunction> init_array;
+    DynamicArray<const ElfFunction> fini_array;
+
+    DynamicArray<const Elf64_Dyn> dynamic;
 };
 
 #endif//__INC_ELF_IMAGE_H_
