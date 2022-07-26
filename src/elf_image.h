@@ -12,11 +12,13 @@ typedef void (*ElfFunction)();
 
 class ElfSymbolTable {
 public:
-    ElfSymbolTable(size_t num_symbols, const Elf64_Sym *symbols, const char *strings);
+    ElfSymbolTable(
+        size_t num_symbols, std::shared_ptr<const Elf64_Sym[]> symbols, std::shared_ptr<const char[]> strings
+    );
 
     const size_t num_symbols;
-    const Elf64_Sym *symbols;
-    const char *strings;
+    std::shared_ptr<const Elf64_Sym[]> symbols;
+    std::shared_ptr<const char[]> strings;
 };
 
 class ElfRelocation {
@@ -40,22 +42,24 @@ public:
 
 private:
     void processRelocations(Elf64_Half section_index, std::istream &is);
-    const char *loadSection(Elf64_Half index, std::istream &is);
+    std::shared_ptr<const char[]> loadSection(Elf64_Half index, std::istream &is);
+    // NB: Loose reference
     const ElfSymbolTable &loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
 
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
 
+    // FIXME: Copies data
     template <typename DataType>
     std::vector<DataType> loadArray(Elf64_Half section_index, std::istream &is);
 
     Elf64_Ehdr elf_header;
     std::unique_ptr<const Elf64_Shdr[]> section_headers;
     std::unique_ptr<const Elf64_Phdr[]> program_headers;
-    const char *section_strings;
-    std::unique_ptr<char[]> image_base;
+    std::shared_ptr<const char[]> section_strings;
+    std::shared_ptr<char[]> image_base;
 
-    std::map<Elf64_Half, std::unique_ptr<char[]>> aux_sections;
+    std::map<Elf64_Half, std::shared_ptr<char[]>> aux_sections;
 
     std::map<Elf64_Half, const ElfSymbolTable> symbol_tables;
 

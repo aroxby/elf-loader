@@ -101,7 +101,8 @@ ElfImage::ElfImage(istream &is) {
 
 void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
     size_t num_entries = section_headers[section_index].sh_size / sizeof(Elf64_Rela);
-    Elf64_Rela *entries = (Elf64_Rela*)loadSection(section_index, is);
+    // FIXME: loadArray
+    Elf64_Rela *entries = (Elf64_Rela*)loadSection(section_index, is).get();
 
     const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
 
@@ -135,20 +136,18 @@ void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
     }
 }
 
-// TODO: These pointers die when the ElfImage is unloaded.  Can we use a shared_ptr?
-const char *ElfImage::loadSection(Elf64_Half index, istream &is) {
-    char *ptr;
+shared_ptr<const char[]> ElfImage::loadSection(Elf64_Half index, istream &is) {
+    shared_ptr<char[]> ptr;
     if(section_headers[index].sh_addr) {  // Resident Section
-        ptr = &image_base[section_headers[index].sh_addr];
+        ptr = shared_ptr<char[]>(image_base, &image_base[section_headers[index].sh_addr]);
     } else {  // Non resident section
-        auto &ptr_ref = aux_sections[index];
-        ptr = ptr_ref.get();
-        if(!ptr) {
-            ptr_ref = unique_ptr<char[]>(new char[section_headers[index].sh_size]);
-            ptr = ptr_ref.get();
+        shared_ptr<char[]> &ptr_ref = aux_sections[index];
+        if(!ptr_ref) {
+            ptr_ref.reset(new char[section_headers[index].sh_size]);
             is.seekg(section_headers[index].sh_offset);
-            is.read(ptr, section_headers[index].sh_size);
+            is.read(ptr_ref.get(), section_headers[index].sh_size);
         }
+        ptr = ptr_ref;
     }
     return ptr;
 }
@@ -161,8 +160,11 @@ const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istrea
     auto iterator = symbol_tables.find(section_index);
     if(iterator == symbol_tables.end()) {
         size_t num_symbols = section_headers[section_index].sh_size / sizeof(Elf64_Sym);
-        const Elf64_Sym *symbols = (Elf64_Sym*)loadSection(section_index, is);
-        const char *strings = loadSection(section_headers[section_index].sh_link, is);
+        // FIXME: loadArray
+        shared_ptr<const Elf64_Sym[]> symbols = reinterpret_pointer_cast<const Elf64_Sym[]>(
+            loadSection(section_index, is)
+        );
+        shared_ptr<const char[]> strings = loadSection(section_headers[section_index].sh_link, is);
 
         auto emplace_result = symbol_tables.emplace(
             section_index, ElfSymbolTable(num_symbols, symbols, strings)
@@ -175,11 +177,13 @@ const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istrea
 template <typename DataType>
 vector<DataType> ElfImage::loadArray(Elf64_Half section_index, istream &is) {
     size_t num_entries =  section_headers[section_index].sh_size / sizeof(DataType);
-    DataType *ptrs = (DataType*)loadSection(section_index, is);
+    shared_ptr<const DataType[]> ptr = reinterpret_pointer_cast<const DataType[]>(
+        loadSection(section_index, is)
+    );
     vector<DataType> entries;
     entries.reserve(num_entries);
     for(size_t i = 0; i<num_entries; i++) {
-        entries.push_back(ptrs[i]);
+        entries.push_back(ptr[i]);
     }
     return entries;
 }
@@ -200,7 +204,7 @@ void ElfImage::allocateAddressSpace() {
         }
     }
 
-    image_base = unique_ptr<char[]>(new char[highestOffset + size]);
+    image_base = shared_ptr<char[]>(new char[highestOffset + size]);
 }
 
 void ElfImage::loadSegment(const Elf64_Phdr &header, istream &is) {
@@ -331,9 +335,9 @@ void ElfImage::dump(ostream &os) const {
     }
 }
 
-ElfSymbolTable::ElfSymbolTable(size_t num_symbols, const Elf64_Sym *symbols, const char *strings) :
-    num_symbols(num_symbols), symbols(symbols), strings(strings) { }
-
+ElfSymbolTable::ElfSymbolTable(
+    size_t num_symbols, shared_ptr<const Elf64_Sym[]> symbols, shared_ptr<const char[]> strings
+) : num_symbols(num_symbols), symbols(symbols), strings(strings) { }
 
 ElfRelocation::ElfRelocation(
     Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name
