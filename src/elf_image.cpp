@@ -6,15 +6,6 @@
 #include "elf_image.h"
 using namespace std;
 
-template <typename ValType, typename RangeType>
-bool _inRange(ValType val, RangeType lower, RangeType upper) {
-    if(val <= lower || val >= upper) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
 ElfImage::ElfImage(istream &is) {
     // Read the header
     is.read((char*)&elf_header, sizeof(elf_header));
@@ -86,19 +77,26 @@ ElfImage::ElfImage(istream &is) {
             dynamic = loadArray<const Elf64_Dyn>(i, is);
             break;
 
+        case SHT_NULL:  // This section is not used
         case SHT_NOTE:  // There's very little information about this available
         case SHT_GNU_HASH:  // This isn't needed to run but it boosts performance
         case SHT_STRTAB:  // These are loaded by other sections
-        case SHT_GNU_versym:  // I can't tell if this is required for dynamic linking
-        case SHT_GNU_verneed:  // I can't tell if this is required for dynamic linking
+        case SHT_GNU_verdef:  // These are only required if we need symbol versioning
+        case SHT_GNU_verneed:  // These are only required if we need symbol versioning
+        case SHT_GNU_versym:  // These are only required if we need symbol versioning
         case SHT_NOBITS:  // These sections contain no data
         case SHT_PROGBITS:  // Most of these aren't processed but there may be exceptions
             // TODO: Figure out if we need to collect .init, .fini, or anything else
+            break;
+
+        default:
+            throw UnexpectedSectionType();
             break;
         }
     }
 }
 
+// TODO: Dynamic symbols (eg: R_X86_64_JMP_SLOT) are null until we do symbol resolution
 void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
     const DynamicArray<const Elf64_Rela> entries = loadArray<const Elf64_Rela>(section_index, is);
     const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
@@ -106,27 +104,10 @@ void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
     for(size_t i = 0; i < entries.getLength(); i++) {
         Elf64_Xword symbol_index = ELF64_R_SYM(entries[i].r_info);
         Elf64_Xword relocation_type = ELF64_R_TYPE_ID(entries[i].r_info);
-        // ELF64_R_TYPE_DATA(entries[i].r_info);  // Seems only used on SPARC
 
-        // FIXME: Dynamic symbols (eg: R_X86_64_JMP_SLOT) are not loaded
-        // Missed in a previous section or included in upcoming section?
         const Elf64_Sym &symbol = table.symbols[symbol_index];
         const char *symbol_name = &table.strings[symbol.st_name];
 
-        /*
-        Elf64_Xword A = entries[i].r_addend;
-        Elf64_Xword B = (Elf64_Xword)&image_base[0];
-        Elf64_Xword S = symbol.st_value;
-        */
-        /*
-        Elf64_Xword P = entries[i].r_offset;
-        Elf64_Xword G = 0;  // GOT offset?
-        Elf64_Xword GOT = 0;  // GOT address?
-        Elf64_Xword L = 0;  // PLT address?
-        Elf64_Xword Z = symbol.st_size;
-        */
-
-        // I'm not ready to process this section yet so we'll just dump it for now
         relocations.emplace_back(
             entries[i].r_offset, relocation_type, entries[i].r_addend, symbol.st_value, symbol_name
         );
@@ -264,8 +245,8 @@ void ElfImage::dump(ostream &os) const {
         os << "Symbol Table: " << &section_strings[section_headers[iterator.first].sh_name] << endl;
 
         for(int i = 0; i < symbols.symbols.getLength(); i++) {
-            auto section_index_for_name = _inRange(
-                symbols.symbols[i].st_shndx, SHN_LORESERVE, SHN_HIRESERVE
+            auto section_index_for_name = (
+                SHN_LORESERVE <= symbols.symbols[i].st_shndx <= SHN_HIRESERVE
             ) ? 0 : symbols.symbols[i].st_shndx;
             os << endl;
             os << "Symbol Name Offset: " << symbols.symbols[i].st_name << endl;
@@ -285,7 +266,7 @@ void ElfImage::dump(ostream &os) const {
     }
 
     // Dump relocations
-    for(auto relocation : relocations) {
+    for(const ElfRelocation &relocation : relocations) {
         os << endl;
         os << "Relocation Offset: " << (void*)relocation.offset << endl;
         os << "Relocation Type: " << relocation.type
@@ -296,22 +277,23 @@ void ElfImage::dump(ostream &os) const {
     }
 
     // Dump init array
-    for(auto function : init_array) {
+    for(const ElfFunction function : init_array) {
         os << endl;
         // Strangely, just printing function addresses was showing the wrong value
         os << "Init: " << (void*)function << endl;
     }
 
     // Dump fini array
-    for(auto function : fini_array) {
+    for(const ElfFunction function : fini_array) {
         os << endl;
         os << "Fini: " << (void*)function << endl;
     }
 
     // Dump dynamic data
-    for(auto entry : dynamic) {
+    for(const Elf64_Dyn &entry : dynamic) {
         os << endl;
         const string &entryTypeName = dynamicEntryTypeToString(entry.d_tag);
+        // DT_LOOS and higher are specified using hex
         if(entry.d_tag < DT_LOOS) {
             os << "Dynamic Entry Type: " << entry.d_tag
                 << " (" << entryTypeName << ')' << endl;

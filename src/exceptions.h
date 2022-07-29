@@ -37,9 +37,9 @@ public:
     }
 };
 
-class MultipleSymbolTables : public ElfLoaderException {
+class UnexpectedSectionType : public ElfLoaderException {
 public:
     const char *what() const noexcept {
-        return "Multiple symbol tables are not supported";
+        return "Encounter unknown section type";
     }
 };
