@@ -202,7 +202,10 @@ void ElfImage::dump(ostream &os) const {
 
     // Dump sections
     for(int i = 0; i < elf_header.e_shnum; i++) {
+        size_t section_offset = i * sizeof(section_headers[i]) + elf_header.e_shoff;
         os << endl;
+        os << "Section Header Index: " << i << endl;
+        os << "Section Header Offset: " << (void*)section_offset << endl;
         os << "Section Name Offset: " << section_headers[i].sh_name << endl;
         os << "Section Name: " << &section_strings[section_headers[i].sh_name] << endl;
         os << "Section Type: " << (void*)((size_t)section_headers[i].sh_type)
