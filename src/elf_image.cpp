@@ -121,7 +121,7 @@ shared_ptr<const char[]> ElfImage::loadSection(Elf64_Half index, istream &is) {
     return ptr;
 }
 
-const ElfSymbolTable &ElfImage::loadSymbolTable(Elf64_Half section_index, istream &is) {
+const ElfSymbolTable ElfImage::loadSymbolTable(Elf64_Half section_index, istream &is) {
     if(section_headers[section_index].sh_size % sizeof(Elf64_Sym) != 0) {
         throw UnsupportedSymbolConfiguration();
     }

@@ -14,8 +14,8 @@ class ElfSymbolTable {
 public:
     ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, std::shared_ptr<const char[]> strings);
 
-    DynamicArray<const Elf64_Sym> symbols;
-    std::shared_ptr<const char[]> strings;
+    const DynamicArray<const Elf64_Sym> symbols;
+    const std::shared_ptr<const char[]> strings;
 };
 
 class ElfRelocations {
@@ -37,8 +37,7 @@ public:
 private:
     std::unique_ptr<const ElfRelocations> loadRelocations(Elf64_Half section_index, std::istream &is);
     std::shared_ptr<const char[]> loadSection(Elf64_Half index, std::istream &is);
-    // NB: Loose reference
-    const ElfSymbolTable &loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
+    const ElfSymbolTable loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
 
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
