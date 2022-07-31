@@ -5,7 +5,6 @@
 #include <string>
 #include <memory>
 #include <map>
-#include <vector>
 #include "elf64.h"
 #include "dynamic_array.h"
 
@@ -19,17 +18,14 @@ public:
     std::shared_ptr<const char[]> strings;
 };
 
-class ElfRelocation {
+class ElfRelocations {
 public:
-    ElfRelocation(
-        Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name
-    );
+    ElfRelocations(const DynamicArray<const Elf64_Rela> relocations, const ElfSymbolTable symbols);
 
-    const Elf64_Addr offset;
-    const Elf64_Xword type;
-    const Elf64_Sxword addend;
-    const Elf64_Addr symbol_value;
-    std::shared_ptr<const char[]> symbol_name;
+    void dump(std::ostream &os) const;
+
+    const DynamicArray<const Elf64_Rela> relocations;
+    const ElfSymbolTable symbols;
 };
 
 class ElfImage {
@@ -39,7 +35,7 @@ public:
     void dump(std::ostream &os) const;
 
 private:
-    void processRelocations(Elf64_Half section_index, std::istream &is);
+    std::unique_ptr<const ElfRelocations> loadRelocations(Elf64_Half section_index, std::istream &is);
     std::shared_ptr<const char[]> loadSection(Elf64_Half index, std::istream &is);
     // NB: Loose reference
     const ElfSymbolTable &loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
@@ -60,7 +56,7 @@ private:
 
     std::map<Elf64_Half, const ElfSymbolTable> symbol_tables;
 
-    std::vector<ElfRelocation> relocations;
+    std::map<Elf64_Half, std::unique_ptr<const ElfRelocations>> relocations;
 
     DynamicArray<const ElfFunction> init_array;
     DynamicArray<const ElfFunction> fini_array;

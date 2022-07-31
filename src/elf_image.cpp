@@ -62,9 +62,11 @@ ElfImage::ElfImage(istream &is) {
             break;
 
         case SHT_RELA:
-            processRelocations(i, is);
+            relocations.emplace(i, loadRelocations(i, is));
             break;
 
+        // TODO: Handle multiple instances of the following sections
+        // Like was done above
         case SHT_INIT_ARRAY:
             init_array = loadArray<const ElfFunction>(i, is);
             break;
@@ -96,22 +98,11 @@ ElfImage::ElfImage(istream &is) {
     }
 }
 
-// TODO: Dynamic symbols (eg: R_X86_64_JMP_SLOT) are null until we do symbol resolution
-void ElfImage::processRelocations(Elf64_Half section_index, istream &is) {
+unique_ptr<const ElfRelocations> ElfImage::loadRelocations(Elf64_Half section_index, istream &is) {
     const DynamicArray<const Elf64_Rela> entries = loadArray<const Elf64_Rela>(section_index, is);
-    const ElfSymbolTable &table = loadSymbolTable(section_headers[section_index].sh_link, is);
-
-    for(size_t i = 0; i < entries.getLength(); i++) {
-        Elf64_Xword symbol_index = ELF64_R_SYM(entries[i].r_info);
-        Elf64_Xword relocation_type = ELF64_R_TYPE_ID(entries[i].r_info);
-
-        const Elf64_Sym &symbol = table.symbols[symbol_index];
-        const char *symbol_name = &table.strings[symbol.st_name];
-
-        relocations.emplace_back(
-            entries[i].r_offset, relocation_type, entries[i].r_addend, symbol.st_value, symbol_name
-        );
-    }
+    const ElfSymbolTable table = loadSymbolTable(section_headers[section_index].sh_link, is);
+    unique_ptr<const ElfRelocations> ptr =  unique_ptr<const ElfRelocations>(new ElfRelocations(entries, table));
+    return ptr;
 }
 
 shared_ptr<const char[]> ElfImage::loadSection(Elf64_Half index, istream &is) {
@@ -269,14 +260,8 @@ void ElfImage::dump(ostream &os) const {
     }
 
     // Dump relocations
-    for(const ElfRelocation &relocation : relocations) {
-        os << endl;
-        os << "Relocation Offset: " << (void*)relocation.offset << endl;
-        os << "Relocation Type: " << relocation.type
-            << " (" << relocationTypeToString(relocation.type) << ')' << endl;
-        os << "Relocation Addend: " << (void*)relocation.addend << endl;
-        os << "Relocation Symbol Value: " << (void*)relocation.symbol_value << endl;
-        os << "Relocation Symbol Name: " << relocation.symbol_name << endl;
+    for(auto &iterator : relocations) {
+        iterator.second->dump(os);
     }
 
     // Dump init array
@@ -314,3 +299,24 @@ ElfSymbolTable::ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, shared_ptr
 ElfRelocation::ElfRelocation(
     Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name
 ) : offset(offset), type(type), addend(addend), symbol_value(symbol_value), symbol_name(symbol_name) { }
+
+
+ElfRelocations::ElfRelocations(const DynamicArray<const Elf64_Rela> relocations, const ElfSymbolTable symbols)
+    : relocations(relocations), symbols(symbols) { }
+
+void ElfRelocations::dump(ostream &os) const {
+    for(const Elf64_Rela relocation : relocations) {
+        Elf64_Xword relocation_type = ELF64_R_TYPE_ID(relocation.r_info);
+        Elf64_Xword symbol_index = ELF64_R_SYM(relocation.r_info);
+        const Elf64_Sym &symbol = symbols.symbols[symbol_index];
+        const char *symbol_name = &symbols.strings[symbol.st_name];
+
+        os << endl;  // TODO: Move these to the end of the block
+        os << "Relocation Offset: " << (void*)relocation.r_offset << endl;
+        os << "Relocation Type: " << relocation_type
+            << " (" << relocationTypeToString(relocation_type) << ')' << endl;
+        os << "Relocation Addend: " << (void*)relocation.r_addend << endl;
+        os << "Relocation Symbol Value: " << (void*)symbol.st_value << endl;
+        os << "Relocation Symbol Name: " << symbol_name << endl;
+    }
+}
