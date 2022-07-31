@@ -296,10 +296,6 @@ void ElfImage::dump(ostream &os) const {
 ElfSymbolTable::ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, shared_ptr<const char[]> strings)
     : symbols(symbols), strings(strings) { }
 
-ElfRelocation::ElfRelocation(
-    Elf64_Addr offset, Elf64_Xword type, Elf64_Sxword addend, Elf64_Addr symbol_value, const char *symbol_name
-) : offset(offset), type(type), addend(addend), symbol_value(symbol_value), symbol_name(symbol_name) { }
-
 
 ElfRelocations::ElfRelocations(const DynamicArray<const Elf64_Rela> relocations, const ElfSymbolTable symbols)
     : relocations(relocations), symbols(symbols) { }
