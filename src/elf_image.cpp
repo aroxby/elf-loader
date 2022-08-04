@@ -291,7 +291,7 @@ void ElfImage::dump(ostream &os) const {
             os << "Dynamic Entry Type: " << (void*)entry.d_tag
                 << " (" << entryTypeName << ')' << endl;
         }
-        os << "Dynamic Entry Address: " << (void*)entry.d_un.d_ptr << endl;
+        os << "Dynamic Entry Value: " << (void*)entry.d_un.d_ptr << endl;
     }
 }
 
