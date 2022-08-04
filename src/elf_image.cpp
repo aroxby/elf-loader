@@ -78,10 +78,8 @@ ElfImage::ElfImage(istream &is) {
             fini_array.emplace(i, loadArray<const ElfFunction>(i, is));
             break;
 
-        // TODO: Handle multiple instances of the following sections
-        // Like was done above
         case SHT_DYNAMIC:
-            dynamic = loadArray<const Elf64_Dyn>(i, is);
+            dynamic.emplace(i, loadArray<const Elf64_Dyn>(i, is));
             break;
 
         case SHT_NULL:  // This section is not used
@@ -280,18 +278,10 @@ void ElfImage::dump(ostream &os) const {
     }
 
     // Dump dynamic data
-    for(const Elf64_Dyn &entry : dynamic) {
-        os << endl;
-        const string &entryTypeName = dynamicEntryTypeToString(entry.d_tag);
-        // DT_LOOS and higher are specified using hex
-        if(entry.d_tag < DT_LOOS) {
-            os << "Dynamic Entry Type: " << entry.d_tag
-                << " (" << entryTypeName << ')' << endl;
-        } else {
-            os << "Dynamic Entry Type: " << (void*)entry.d_tag
-                << " (" << entryTypeName << ')' << endl;
+    for(auto iterator : dynamic) {
+        for(const Elf64_Dyn entry : iterator.second) {
+            dumpDynamicEntry(entry, os);
         }
-        os << "Dynamic Entry Value: " << (void*)entry.d_un.d_ptr << endl;
     }
 }
 
@@ -326,4 +316,18 @@ void dumpFunctionArray(const string &name, const DynamicArray<const ElfFunction>
             os << name << ": " << (void*)function << endl;
         }
     }
+}
+
+void dumpDynamicEntry(const Elf64_Dyn entry, ostream &os) {
+    os << endl;
+    const string &entryTypeName = dynamicEntryTypeToString(entry.d_tag);
+    // DT_LOOS and higher are specified using hex
+    if(entry.d_tag < DT_LOOS) {
+        os << "Dynamic Entry Type: " << entry.d_tag
+            << " (" << entryTypeName << ')' << endl;
+    } else {
+        os << "Dynamic Entry Type: " << (void*)entry.d_tag
+            << " (" << entryTypeName << ')' << endl;
+    }
+    os << "Dynamic Entry Value: " << (void*)entry.d_un.d_ptr << endl;
 }

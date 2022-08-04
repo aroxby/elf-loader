@@ -60,11 +60,12 @@ private:
     std::map<Elf64_Half, const DynamicArray<const ElfFunction>> init_array;
     std::map<Elf64_Half, const DynamicArray<const ElfFunction>> fini_array;
 
-    DynamicArray<const Elf64_Dyn> dynamic;
+    std::map<Elf64_Half, const DynamicArray<const Elf64_Dyn>> dynamic;
 };
 
 void dumpFunctionArray(
     const std::string &name, const DynamicArray<const ElfFunction> array, std::ostream &os
 );
+void dumpDynamicEntry(const Elf64_Dyn entry, std::ostream &os);
 
 #endif//__INC_ELF_IMAGE_H_
