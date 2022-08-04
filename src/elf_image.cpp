@@ -280,7 +280,7 @@ void ElfSymbolTable::dump(const ElfImage &image, Elf64_Half section_index, ostre
 
     for(int i = 0; i < symbols.getLength(); i++) {
         auto section_index_for_name = (
-            SHN_LORESERVE <= symbols[i].st_shndx <= SHN_HIRESERVE
+            symbols[i].st_shndx >=SHN_LORESERVE && symbols[i].st_shndx <= SHN_HIRESERVE
         ) ? 0 : symbols[i].st_shndx;
         os << endl;
         os << "Symbol Name Offset: " << symbols[i].st_name << endl;
