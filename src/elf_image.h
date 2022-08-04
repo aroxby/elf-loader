@@ -57,10 +57,14 @@ private:
 
     std::map<Elf64_Half, std::unique_ptr<const ElfRelocations>> relocations;
 
-    DynamicArray<const ElfFunction> init_array;
-    DynamicArray<const ElfFunction> fini_array;
+    std::map<Elf64_Half, const DynamicArray<const ElfFunction>> init_array;
+    std::map<Elf64_Half, const DynamicArray<const ElfFunction>> fini_array;
 
     DynamicArray<const Elf64_Dyn> dynamic;
 };
+
+void dumpFunctionArray(
+    const std::string &name, const DynamicArray<const ElfFunction> array, std::ostream &os
+);
 
 #endif//__INC_ELF_IMAGE_H_

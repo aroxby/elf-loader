@@ -58,6 +58,11 @@ ElfImage::ElfImage(istream &is) {
         switch(section_headers[i].sh_type) {
         case SHT_SYMTAB:
         case SHT_DYNSYM:
+            // Unlike other methods like `loadRelocations`
+            // `loadSymbolTable` checks if the table has already been
+            // loaded and thus manages the instance variable.
+            // This is done because other sections sometimes also load
+            // symbol tables
             loadSymbolTable(i, is);
             break;
 
@@ -65,16 +70,16 @@ ElfImage::ElfImage(istream &is) {
             relocations.emplace(i, loadRelocations(i, is));
             break;
 
-        // TODO: Handle multiple instances of the following sections
-        // Like was done above
         case SHT_INIT_ARRAY:
-            init_array = loadArray<const ElfFunction>(i, is);
+            init_array.emplace(i, loadArray<const ElfFunction>(i, is));
             break;
 
         case SHT_FINI_ARRAY:
-            fini_array = loadArray<const ElfFunction>(i, is);
+            fini_array.emplace(i, loadArray<const ElfFunction>(i, is));
             break;
 
+        // TODO: Handle multiple instances of the following sections
+        // Like was done above
         case SHT_DYNAMIC:
             dynamic = loadArray<const Elf64_Dyn>(i, is);
             break;
@@ -265,16 +270,13 @@ void ElfImage::dump(ostream &os) const {
     }
 
     // Dump init array
-    for(const ElfFunction function : init_array) {
-        os << endl;
-        // Strangely, just printing function addresses was showing the wrong value
-        os << "Init: " << (void*)function << endl;
+    for(auto iterator : init_array) {
+        dumpFunctionArray("Init", iterator.second, os);
     }
 
     // Dump fini array
-    for(const ElfFunction function : fini_array) {
-        os << endl;
-        os << "Fini: " << (void*)function << endl;
+    for(auto iterator : fini_array) {
+        dumpFunctionArray("Fini", iterator.second, os);
     }
 
     // Dump dynamic data
@@ -314,5 +316,14 @@ void ElfRelocations::dump(ostream &os) const {
         os << "Relocation Addend: " << (void*)relocation.r_addend << endl;
         os << "Relocation Symbol Value: " << (void*)symbol.st_value << endl;
         os << "Relocation Symbol Name: " << symbol_name << endl;
+    }
+}
+
+void dumpFunctionArray(const string &name, const DynamicArray<const ElfFunction> array, ostream &os) {
+    if(array.getLength()) {
+        os << endl;
+        for(ElfFunction function : array) {
+            os << name << ": " << (void*)function << endl;
+        }
     }
 }
