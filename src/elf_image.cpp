@@ -238,28 +238,7 @@ void ElfImage::dump(ostream &os) const {
     // Dump symbols
     for(auto iterator : symbol_tables) {
         const ElfSymbolTable &symbols = iterator.second;
-        os << endl;
-        os << "Symbol Table: " << &section_strings[section_headers[iterator.first].sh_name] << endl;
-
-        for(int i = 0; i < symbols.symbols.getLength(); i++) {
-            auto section_index_for_name = (
-                SHN_LORESERVE <= symbols.symbols[i].st_shndx <= SHN_HIRESERVE
-            ) ? 0 : symbols.symbols[i].st_shndx;
-            os << endl;
-            os << "Symbol Name Offset: " << symbols.symbols[i].st_name << endl;
-            os << "Symbol Name: " << &symbols.strings[symbols.symbols[i].st_name] << endl;
-            os << "Symbol Bind: " << ELF64_ST_BIND(symbols.symbols[i].st_info)
-                << " (" << symbolBindToString(ELF64_ST_BIND(symbols.symbols[i].st_info)) << ')' << endl;
-            os << "Symbol Type: " << ELF64_ST_TYPE(symbols.symbols[i].st_info)
-                << " (" << symbolTypeToString(ELF64_ST_TYPE(symbols.symbols[i].st_info)) << ')' << endl;
-            // Strangely, elf_common.h contains 7 constants for this despite it being 2 bits
-            os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(symbols.symbols[i].st_other) << endl;
-            os << "Symbol Section Index: " << symbols.symbols[i].st_shndx << endl;
-            os << "Symbol Section Name: "
-                << &section_strings[section_headers[section_index_for_name].sh_name] << endl;
-            os << "Symbol Value: " << (void*)symbols.symbols[i].st_value << endl;
-            os << "Symbol Size: " << symbols.symbols[i].st_size << endl;
-        }
+        iterator.second.dump(*this, iterator.first, os);
     }
 
     // Dump relocations
@@ -285,9 +264,40 @@ void ElfImage::dump(ostream &os) const {
     }
 }
 
+shared_ptr<const char[]> ElfImage::getSectionName(Elf64_Half index) const {
+    shared_ptr<const char[]> ptr = shared_ptr<const char[]>(
+        section_strings, &section_strings[section_headers[index].sh_name]
+    );
+    return ptr;
+}
+
 ElfSymbolTable::ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, shared_ptr<const char[]> strings)
     : symbols(symbols), strings(strings) { }
 
+void ElfSymbolTable::dump(const ElfImage &image, Elf64_Half section_index, ostream &os) const {
+    os << endl;
+    os << "Symbol Table: " << image.getSectionName(section_index) << endl;
+
+    for(int i = 0; i < symbols.getLength(); i++) {
+        auto section_index_for_name = (
+            SHN_LORESERVE <= symbols[i].st_shndx <= SHN_HIRESERVE
+        ) ? 0 : symbols[i].st_shndx;
+        os << endl;
+        os << "Symbol Name Offset: " << symbols[i].st_name << endl;
+        os << "Symbol Name: " << &strings[symbols[i].st_name] << endl;
+        os << "Symbol Bind: " << ELF64_ST_BIND(symbols[i].st_info)
+            << " (" << symbolBindToString(ELF64_ST_BIND(symbols[i].st_info)) << ')' << endl;
+        os << "Symbol Type: " << ELF64_ST_TYPE(symbols[i].st_info)
+            << " (" << symbolTypeToString(ELF64_ST_TYPE(symbols[i].st_info)) << ')' << endl;
+        // Strangely, elf_common.h contains 7 constants for this despite it being 2 bits
+        os << "Symbol Visibility: " << ELF64_ST_VISIBILITY(symbols[i].st_other) << endl;
+        os << "Symbol Section Index: " << symbols[i].st_shndx << endl;
+        os << "Symbol Section Name: "
+            << image.getSectionName(section_index_for_name) << endl;
+        os << "Symbol Value: " << (void*)symbols[i].st_value << endl;
+        os << "Symbol Size: " << symbols[i].st_size << endl;
+    }
+}
 
 ElfRelocations::ElfRelocations(const DynamicArray<const Elf64_Rela> relocations, const ElfSymbolTable symbols)
     : relocations(relocations), symbols(symbols) { }

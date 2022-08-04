@@ -10,9 +10,13 @@
 
 typedef void (*ElfFunction)();
 
+class ElfImage;
+
 class ElfSymbolTable {
 public:
     ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, std::shared_ptr<const char[]> strings);
+
+    void dump(const ElfImage &image, Elf64_Half section_index, std::ostream &os) const;
 
     const DynamicArray<const Elf64_Sym> symbols;
     const std::shared_ptr<const char[]> strings;
@@ -33,6 +37,8 @@ public:
     ElfImage(std::istream &is);
 
     void dump(std::ostream &os) const;
+
+    std::shared_ptr<const char[]> getSectionName(Elf64_Half index) const;
 
 private:
     std::unique_ptr<const ElfRelocations> loadRelocations(Elf64_Half section_index, std::istream &is);
