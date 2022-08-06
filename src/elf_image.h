@@ -69,6 +69,13 @@ private:
     std::map<Elf64_Half, const DynamicArray<const Elf64_Dyn>> dynamic;
 };
 
+void dumpElfHeader(const Elf64_Ehdr header, std::ostream &os);
+
+void dumpSectionHeader(
+    const Elf64_Shdr header, Elf64_Off sectionOffset, Elf64_Half sectionIndex, const ElfImage &image, std::ostream &os
+);
+void dumpProgramHeader(const Elf64_Phdr header, std::ostream &os);
+
 void dumpFunctionArray(
     const std::string &name, const DynamicArray<const ElfFunction> array, std::ostream &os
 );
