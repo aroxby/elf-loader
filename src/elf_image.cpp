@@ -181,10 +181,7 @@ void ElfImage::dump(ostream &os) const {
     dumpElfHeader(elf_header, os);
 
     // Dump sections
-    for(int i = 0; i < elf_header.e_shnum; i++) {
-        size_t sectionOffset = i * sizeof(section_headers[i]) + elf_header.e_shoff;
-        dumpSectionHeader(section_headers[i], sectionOffset, i, *this, os);
-    }
+    dumpSectionHeaders(section_headers.get(), elf_header.e_shnum, section_strings.get(), elf_header.e_shoff, os);
 
     // Dump program headers
     for(int i = 0; i < elf_header.e_phnum; i++) {
@@ -293,27 +290,32 @@ void ElfRelocations::dump(ostream &os) const {
     }
 }
 
-void dumpSectionHeader(
-    const Elf64_Shdr header, Elf64_Off sectionOffset, Elf64_Half sectionIndex, const ElfImage &image, ostream &os
+void dumpSectionHeaders(
+    const Elf64_Shdr headers[], size_t numHeaders, const char sectionStrings[], size_t sectionsOffset, ostream &os
 ) {
-    os << endl;
-    os << "Section Header Index: " << sectionIndex << endl;
-    os << "Section Header Offset: " << (void*)sectionOffset << endl;
-    os << "Section Name Offset: " << header.sh_name << endl;
-    os << "Section Name: " << image.getSectionName(sectionIndex) << endl;
-    os << "Section Type: " << (void*)((size_t)header.sh_type)
-        << " (" << sectionTypeToString(header.sh_type) << ')' << endl;
-    os << "Section Type Name: " << getSectionTypeName(header.sh_type) << endl;
-    os << "Section Flags: " << (void*)header.sh_flags
-        << " (" << sectionFlagsToString(header.sh_flags) << ')' << endl;
-    os << "Section Address: " << (void*)header.sh_addr << endl;
-    os << "Section Offset: " << (void*)header.sh_offset << endl;
-    os << "Section Size: " << header.sh_size << endl;
-    os << "Related Section: "
-        << header.sh_link << " (" << image.getSectionName(header.sh_link) << ')' << endl;
-    os << "Section Info: " << (void*)((size_t)header.sh_info) << endl;
-    os << "Section Alignment: " << (void*)header.sh_addralign << endl;
-    os << "Section Entry Size: " << (void*)header.sh_entsize << endl;
+    for(size_t i = 0; i < numHeaders; i++) {
+        size_t sectionOffset = i * sizeof(headers[i]) + sectionsOffset;
+        os << endl;
+        os << "Section Header Index: " << i << endl;
+        os << "Section Header Offset: " << (void*)sectionOffset << endl;
+        os << "Section Name Offset: " << headers[i].sh_name << endl;
+        os << "Section Name: " << &sectionStrings[headers[i].sh_name] << endl;
+        os << "Section Type: " << (void*)((size_t)headers[i].sh_type)
+            << " (" << sectionTypeToString(headers[i].sh_type) << ')' << endl;
+        os << "Section Type Name: " << getSectionTypeName(headers[i].sh_type) << endl;
+        os << "Section Flags: " << (void*)headers[i].sh_flags
+            << " (" << sectionFlagsToString(headers[i].sh_flags) << ')' << endl;
+        os << "Section Address: " << (void*)headers[i].sh_addr << endl;
+        os << "Section Offset: " << (void*)headers[i].sh_offset << endl;
+        os << "Section Size: " << headers[i].sh_size << endl;
+        os << "Related Section: "
+            << headers[i].sh_link << " ("
+            << &sectionStrings[headers[headers[i].sh_link].sh_name]
+            << ')' << endl;
+        os << "Section Info: " << (void*)((size_t)headers[i].sh_info) << endl;
+        os << "Section Alignment: " << (void*)headers[i].sh_addralign << endl;
+        os << "Section Entry Size: " << (void*)headers[i].sh_entsize << endl;
+    }
 }
 
 void dumpProgramHeader(const Elf64_Phdr header, ostream &os) {

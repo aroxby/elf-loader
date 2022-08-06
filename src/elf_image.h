@@ -71,9 +71,10 @@ private:
 
 void dumpElfHeader(const Elf64_Ehdr header, std::ostream &os);
 
-void dumpSectionHeader(
-    const Elf64_Shdr header, Elf64_Off sectionOffset, Elf64_Half sectionIndex, const ElfImage &image, std::ostream &os
+void dumpSectionHeaders(
+    const Elf64_Shdr headers[], size_t numHeaders, const char sectionStrings[], size_t sectionsOffset, std::ostream &os
 );
+
 void dumpProgramHeader(const Elf64_Phdr header, std::ostream &os);
 
 void dumpFunctionArray(
