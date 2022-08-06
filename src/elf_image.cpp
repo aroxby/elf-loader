@@ -28,16 +28,20 @@ ElfImage::ElfImage(istream &is) {
 
     // Load section headers
     is.seekg(elf_header.e_shoff);
-    section_headers = unique_ptr<const Elf64_Shdr[]>(new Elf64_Shdr[elf_header.e_shnum]);
-    for(int i = 0; i < elf_header.e_shnum; i++) {
-        is.read((char*)&section_headers[i], sizeof(Elf64_Shdr));
+    section_headers = DynamicArray(
+        shared_ptr<const Elf64_Shdr[]>(new Elf64_Shdr[elf_header.e_shnum]), elf_header.e_shnum
+    );
+    for(const Elf64_Shdr &header : section_headers) {
+        is.read((char*)&header, sizeof(Elf64_Shdr));
     }
 
     // Load program headers
     is.seekg(elf_header.e_phoff);
-    program_headers = unique_ptr<const Elf64_Phdr[]>(new Elf64_Phdr[elf_header.e_phnum]);
-    for(int i = 0; i < elf_header.e_phnum; i++) {
-        is.read((char*)&program_headers[i], sizeof(Elf64_Phdr));
+    program_headers = DynamicArray(
+        shared_ptr<const Elf64_Phdr[]>(new Elf64_Phdr[elf_header.e_phnum]), elf_header.e_phnum
+    );
+    for(const Elf64_Phdr &header : program_headers) {
+        is.read((char*)&header, sizeof(Elf64_Phdr));
     }
 
     // Load section header string table by known index
@@ -181,11 +185,11 @@ void ElfImage::dump(ostream &os) const {
     dumpElfHeader(elf_header, os);
 
     // Dump sections
-    dumpSectionHeaders(section_headers.get(), elf_header.e_shnum, section_strings.get(), elf_header.e_shoff, os);
+    dumpSectionHeaders(section_headers, section_strings.get(), elf_header.e_shoff, os);
 
     // Dump program headers
-    for(int i = 0; i < elf_header.e_phnum; i++) {
-        dumpProgramHeader(program_headers[i], os);
+    for(Elf64_Phdr header : program_headers) {
+        dumpProgramHeader(header, os);
     }
 
     // Dump symbols
@@ -291,9 +295,9 @@ void ElfRelocations::dump(ostream &os) const {
 }
 
 void dumpSectionHeaders(
-    const Elf64_Shdr headers[], size_t numHeaders, const char sectionStrings[], size_t sectionsOffset, ostream &os
+    DynamicArray<const Elf64_Shdr> headers, const char sectionStrings[], size_t sectionsOffset, ostream &os
 ) {
-    for(size_t i = 0; i < numHeaders; i++) {
+    for(size_t i = 0; i < headers.getLength(); i++) {
         size_t sectionOffset = i * sizeof(headers[i]) + sectionsOffset;
         os << endl;
         os << "Section Header Index: " << i << endl;

@@ -52,8 +52,8 @@ private:
     DynamicArray<DataType> loadArray(Elf64_Half section_index, std::istream &is);
 
     Elf64_Ehdr elf_header;
-    std::unique_ptr<const Elf64_Shdr[]> section_headers;
-    std::unique_ptr<const Elf64_Phdr[]> program_headers;
+    DynamicArray<const Elf64_Shdr> section_headers;
+    DynamicArray<const Elf64_Phdr> program_headers;
     std::shared_ptr<const char[]> section_strings;
     std::shared_ptr<char[]> image_base;
 
@@ -72,7 +72,7 @@ private:
 void dumpElfHeader(const Elf64_Ehdr header, std::ostream &os);
 
 void dumpSectionHeaders(
-    const Elf64_Shdr headers[], size_t numHeaders, const char sectionStrings[], size_t sectionsOffset, std::ostream &os
+    DynamicArray<const Elf64_Shdr> headers, const char sectionStrings[], size_t sectionsOffset, std::ostream &os
 );
 
 void dumpProgramHeader(const Elf64_Phdr header, std::ostream &os);
