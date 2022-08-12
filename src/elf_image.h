@@ -38,6 +38,7 @@ public:
 
     void dump(std::ostream &os) const;
 
+    // Having this method around really bothers me and I want to refactor ElfSymbolTable::dump so we don't need this
     std::shared_ptr<const char[]> getSectionName(Elf64_Half index) const;
 
 private:
