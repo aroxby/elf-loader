@@ -10,14 +10,13 @@ ElfSymbolTable::ElfSymbolTable(DynamicArray<const Elf64_Sym> symbols, shared_ptr
     : symbols(symbols), strings(strings) { }
 
 void ElfSymbolTable::dump(const ElfImage &image, Elf64_Half section_index, ostream &os) const {
-    os << endl;
     os << "Symbol Table: " << image.getSectionName(section_index) << endl;
+    os << endl;
 
     for(int i = 0; i < symbols.getLength(); i++) {
         Elf64_Half section_index_for_name = (
             symbols[i].st_shndx >=SHN_LORESERVE && symbols[i].st_shndx <= SHN_HIRESERVE
         ) ? 0 : symbols[i].st_shndx;
-        os << endl;
         os << "Symbol Name Offset: " << symbols[i].st_name << endl;
         os << "Symbol Name: " << &strings[symbols[i].st_name] << endl;
         os << "Symbol Bind: " << ELF64_ST_BIND(symbols[i].st_info)
@@ -31,6 +30,7 @@ void ElfSymbolTable::dump(const ElfImage &image, Elf64_Half section_index, ostre
             << image.getSectionName(section_index_for_name) << endl;
         os << "Symbol Value: " << (void*)symbols[i].st_value << endl;
         os << "Symbol Size: " << symbols[i].st_size << endl;
+        os << endl;
     }
 }
 
@@ -44,13 +44,13 @@ void ElfRelocations::dump(ostream &os) const {
         const Elf64_Sym &symbol = symbols.symbols[symbol_index];
         const char *symbol_name = &symbols.strings[symbol.st_name];
 
-        os << endl;  // TODO: Move these to the end of the block
         os << "Relocation Offset: " << (void*)relocation.r_offset << endl;
         os << "Relocation Type: " << relocation_type
             << " (" << relocationTypeToString(relocation_type) << ')' << endl;
         os << "Relocation Addend: " << (void*)relocation.r_addend << endl;
         os << "Relocation Symbol Value: " << (void*)symbol.st_value << endl;
         os << "Relocation Symbol Name: " << symbol_name << endl;
+        os << endl;
     }
 }
 
@@ -292,6 +292,7 @@ void dumpElfHeader(const Elf64_Ehdr header, ostream &os) {
     os << "Section Header Size: "<< header.e_shentsize << endl;
     os << "Number of Section Header Entries: " << header.e_shnum << endl;
     os << "Strings Section Index: " << header.e_shstrndx << endl;
+    os << endl;
 }
 
 void dumpSectionHeaders(
@@ -299,7 +300,6 @@ void dumpSectionHeaders(
 ) {
     for(size_t i = 0; i < headers.getLength(); i++) {
         size_t sectionOffset = i * sizeof(headers[i]) + sectionsOffset;
-        os << endl;
         os << "Section Header Index: " << i << endl;
         os << "Section Header Offset: " << (void*)sectionOffset << endl;
         os << "Section Name Offset: " << headers[i].sh_name << endl;
@@ -319,11 +319,11 @@ void dumpSectionHeaders(
         os << "Section Info: " << (void*)((size_t)headers[i].sh_info) << endl;
         os << "Section Alignment: " << (void*)headers[i].sh_addralign << endl;
         os << "Section Entry Size: " << (void*)headers[i].sh_entsize << endl;
+        os << endl;
     }
 }
 
 void dumpProgramHeader(const Elf64_Phdr header, ostream &os) {
-    os << endl;
     os << "Segment Type: " << (void*)((size_t)header.p_type)
         << " (" << segmentTypeToString(header.p_type) << ')' << endl;
     os << "Segment Type Name: " << getSegmentTypeName(header.p_type) << endl;
@@ -335,19 +335,19 @@ void dumpProgramHeader(const Elf64_Phdr header, ostream &os) {
     os << "Segment File Size: " << header.p_filesz << endl;
     os << "Segment Memory Size: " << header.p_memsz << endl;
     os << "Segment Alignment: " << (void*)header.p_align << endl;
+    os << endl;
 }
 
 void dumpFunctionArray(const string &name, const DynamicArray<const ElfFunction> array, ostream &os) {
     if(array.getLength()) {
-        os << endl;
         for(ElfFunction function : array) {
             os << name << ": " << (void*)function << endl;
         }
+        os << endl;
     }
 }
 
 void dumpDynamicEntry(const Elf64_Dyn entry, ostream &os) {
-    os << endl;
     const string &entryTypeName = dynamicEntryTypeToString(entry.d_tag);
     // DT_LOOS and higher are specified using hex
     if(entry.d_tag < DT_LOOS) {
@@ -358,4 +358,5 @@ void dumpDynamicEntry(const Elf64_Dyn entry, ostream &os) {
             << " (" << entryTypeName << ')' << endl;
     }
     os << "Dynamic Entry Value: " << (void*)entry.d_un.d_ptr << endl;
+    os << endl;
 }
