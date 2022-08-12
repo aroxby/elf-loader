@@ -42,12 +42,12 @@ public:
     std::shared_ptr<const char[]> getSectionName(Elf64_Half index) const;
 
 private:
-    std::unique_ptr<const ElfRelocations> loadRelocations(Elf64_Half section_index, std::istream &is);
-    std::shared_ptr<const char[]> loadSection(Elf64_Half index, std::istream &is);
-    const ElfSymbolTable loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
-
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);
+
+    std::shared_ptr<const char[]> loadSection(Elf64_Half index, std::istream &is);
+    std::unique_ptr<const ElfRelocations> loadRelocations(Elf64_Half section_index, std::istream &is);
+    const ElfSymbolTable loadSymbolTable(Elf64_Half symbol_index, std::istream &is);
 
     template <typename DataType>
     DynamicArray<DataType> loadArray(Elf64_Half section_index, std::istream &is);
