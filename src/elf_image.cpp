@@ -201,6 +201,10 @@ shared_ptr<const char[]> ElfImage::getSectionName(Elf64_Half index) const {
     return ptr;
 }
 
+const map<Elf64_Half, unique_ptr<const ElfRelocations>> &ElfImage::getRelocations() const {
+    return relocations;
+}
+
 void ElfImage::allocateAddressSpace() {
     Elf64_Addr highestOffset = 0;
     Elf64_Xword size = 0;

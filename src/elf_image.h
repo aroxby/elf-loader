@@ -41,6 +41,11 @@ public:
     // Having this method around really bothers me and I want to refactor ElfSymbolTable::dump so we don't need this
     std::shared_ptr<const char[]> getSectionName(Elf64_Half index) const;
 
+    const std::map<Elf64_Half, std::unique_ptr<const ElfRelocations>> &getRelocations() const;
+
+protected:
+    void *getImageBase() const { return image_base.get(); }
+
 private:
     void allocateAddressSpace();
     void loadSegment(const Elf64_Phdr &header, std::istream &is);

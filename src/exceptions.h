@@ -1,4 +1,8 @@
+#ifndef __INC_EXCEPTIONS_H_
+#define __INC_EXCEPTIONS_H_
+
 #include <exception>
+#include <string>
 
 class ElfLoaderException : public std::exception {};
 
@@ -43,3 +47,29 @@ public:
         return "Encounter unknown section type";
     }
 };
+
+class UnexpectedRelocationType : public ElfLoaderException {
+public:
+    UnexpectedRelocationType(const std::string &type);
+
+    const char *what() const noexcept {
+        return msg;
+    }
+
+private:
+    char *msg;
+};
+
+class UnresolvedSymbol : public ElfLoaderException {
+public:
+    UnresolvedSymbol(const std::string &name);
+
+    const char *what() const noexcept {
+        return msg;
+    }
+
+private:
+    char *msg;
+};
+
+#endif//__INC_EXCEPTIONS_H_

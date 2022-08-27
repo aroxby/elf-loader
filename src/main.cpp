@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "elf_image.h"
+#include "elf_module.h"
 using namespace std;
 
 
@@ -14,8 +14,7 @@ int main(int argc, char *argv[]) {
     ifs.exceptions(ifstream::eofbit | ifstream::failbit | ifstream::badbit);
     ifs.open(argv[1], ios_base::in | ios_base::binary);
 
-    ElfImage library(ifs);
-    library.dump(cout);
+    ElfModule library(ElfModule::DynamicShims(), ifs);
 
     return 0;
 }
