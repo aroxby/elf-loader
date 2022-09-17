@@ -50,7 +50,7 @@ public:
 
     const void *getSymbolAddress(const std::string &symbol_name);
 
-protected:
+// protected:
     void *getImageBase() const { return image_base.get(); }
 
 private:

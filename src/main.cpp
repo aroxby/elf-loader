@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "elf_module.h"
+#include "mprotect.h"
 using namespace std;
 
 SYSV int printWrapper(const char *str) {
@@ -28,6 +29,9 @@ int main(int argc, char *argv[]) {
 
     shims["printf"] = (const void*)printWrapper;
     ElfModule library(shims, ifs);
+
+    // FIXME: Do this at allocation time
+    unprotect(library.getImageBase(), 0x5000);
 
     const void *example_function_addr = library.getSymbolAddress(argv[2]);
 
