@@ -43,6 +43,8 @@ public:
 
     const std::map<Elf64_Half, std::unique_ptr<const ElfRelocations>> &getRelocations() const;
 
+    const void *getSymbolAddress(const std::string &symbol_name);
+
 protected:
     void *getImageBase() const { return image_base.get(); }
 

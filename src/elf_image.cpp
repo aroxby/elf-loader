@@ -1,3 +1,4 @@
+#include <cstring>
 #include <istream>
 #include <string>
 #include <memory>
@@ -222,6 +223,21 @@ void ElfImage::allocateAddressSpace() {
     }
 
     image_base = shared_ptr<char[]>(new char[highestOffset + size]);
+}
+
+const void *ElfImage::getSymbolAddress(const std::string &symbol_name) {
+    for(auto iterator : symbol_tables) {
+        const ElfSymbolTable &table = iterator.second;
+        for(const Elf64_Sym &symbol : table.symbols) {
+            const char *name = &table.strings[symbol.st_name];
+            if(!strcmp(name, symbol_name.c_str())) {
+                return (const void*)(image_base.get() + symbol.st_value);
+            }
+        }
+    }
+
+    // TODO: Use exceptions here?
+    return nullptr;
 }
 
 void ElfImage::loadSegment(const Elf64_Phdr &header, istream &is) {
