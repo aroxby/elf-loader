@@ -8,7 +8,11 @@
 #include "elf64.h"
 #include "dynamic_array.h"
 
-typedef void (*ElfFunction)();
+// Because of course different platforms have their own impl of calling conventions, ugh
+// I should just be happy there's a decorator for it
+#define SYSV __attribute__((sysv_abi))
+
+typedef SYSV void (*ElfFunction)();
 
 class ElfImage;
 
@@ -18,6 +22,7 @@ public:
 
     void dump(const ElfImage &image, Elf64_Half section_index, std::ostream &os) const;
 
+    // TODO: Use some kind of hash table for this
     const DynamicArray<const Elf64_Sym> symbols;
     const std::shared_ptr<const char[]> strings;
 };
