@@ -76,7 +76,7 @@ ElfImage::ElfImage(istream &is) {
 
     // Load section headers
     is.seekg(elf_header.e_shoff);
-    section_headers = DynamicArray(
+    section_headers = DynamicArray<const Elf64_Shdr>(
         shared_ptr<const Elf64_Shdr[]>(new Elf64_Shdr[elf_header.e_shnum]), elf_header.e_shnum
     );
     for(const Elf64_Shdr &header : section_headers) {
@@ -85,7 +85,7 @@ ElfImage::ElfImage(istream &is) {
 
     // Load program headers
     is.seekg(elf_header.e_phoff);
-    program_headers = DynamicArray(
+    program_headers = DynamicArray<const Elf64_Phdr>(
         shared_ptr<const Elf64_Phdr[]>(new Elf64_Phdr[elf_header.e_phnum]), elf_header.e_phnum
     );
     for(const Elf64_Phdr &header : program_headers) {
@@ -277,7 +277,8 @@ DynamicArray<DataType> ElfImage::loadArray(Elf64_Half section_index, istream &is
     shared_ptr<const DataType[]> ptr = reinterpret_pointer_cast<const DataType[]>(
         loadSection(section_index, is)
     );
-    return DynamicArray(ptr, num_entries);
+    // TODO: Should this be `const DataType`?
+    return DynamicArray<DataType>(ptr, num_entries);
 }
 
 void dumpElfHeader(const Elf64_Ehdr header, ostream &os) {
